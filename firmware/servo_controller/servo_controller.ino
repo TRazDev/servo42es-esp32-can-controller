@@ -32,6 +32,9 @@ void setup() {
   servo::begin();
 
   WiFi.mode(WIFI_STA);
+  // Also answer IPv6 (AAAA) mDNS queries. Without it, macOS waits ~5 s for an
+  // AAAA reply before falling back to IPv4 for servo-control.local.
+  WiFi.enableIPv6();
   WiFi.setHostname(HOSTNAME);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);

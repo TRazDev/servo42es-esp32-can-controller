@@ -57,6 +57,6 @@ The design in design/ covers the whole brief: all 4 tabs, the E-STOP latch, conf
 8. **Theme is light.** The brief said dark was preferred; the design chose light. Keep it unless the user says otherwise.
 
 ## Open questions (test on hardware)
-- Does the 92H zero survive a power cycle? The manual suggests that without homing, the power-on position becomes zero.
+- Does the 92H zero survive a power cycle? The manual suggests that without homing, the power-on position becomes zero. Observed 2026-09-11: after a motor power cycle, 31H read 0 (it was 5 before), so the count restarts near zero at every power-up. Not yet tested with 92H.
 - On the 42ES, can the single IN port be both the homing switch and the left limit?
 - Does the §8.1 microstep speed scaling also apply to F4/F5 speeds?

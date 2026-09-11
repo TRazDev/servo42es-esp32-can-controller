@@ -32,7 +32,8 @@ Newest first. The top entry should always describe the current state.
   - Direction: +counts = counter-clockwise seen from the shaft end (user observed).
   - Open: whether the position fully settles after "done".
   - Started the real firmware, `firmware/servo_controller`. **Step 1**: WiFi (station) + mDNS `servo-control.local` + CAN polling (31/32/39/F1/3A/3E/37 fast; 40 and mode slow) + a status page at `/` and JSON at `/api/status`. Read-only. Compiles with no warnings (D-012: no extra libraries).
-  - Next: the user fills in `secrets.h`, then upload and open http://servo-control.local. Step 2: WebSocket + port of the design/ UI + control commands.
+  - **Step 1 VERIFIED end to end:** the ESP32 joined the WiFi (192.168.1.139), `servo-control.local` resolves, and `/api/status` shows the motor online (~67 CAN replies/s, V1.0.1, mode 05, enabled). Had to enable IPv6 to remove a 5 s `.local` delay on macOS (network.md).
+  - Next: the user checks the status page in the browser. Then step 2: WebSocket + port of the design/ UI + control commands.
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md
