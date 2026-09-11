@@ -26,7 +26,9 @@ Newest first. The top entry should always describe the current state.
   - D-011: http://servo-control.local, no login
 - **Wiring (in progress):** the user sent photos of the ESP32 board, the CAN module and the motor. The CAN module has a 120 Ω terminator. Put the motor's 2×11 connector pinout (manual p.7) in hardware.md; which row is which is still unverified.
 - **Next:**
-  1. Wiring done and checked from photos (hardware.md → As built). First 24 V power-up: the motor holds position. The user insulated the loose ends and confirmed the jumpers are on GPIO 4/5. Wrote `firmware/can_test` (read-only: 40H version, 31H position every second, bus status); it compiles with arduino-cli. Next: upload it and check that the motor replies.
+  1. Wiring done and checked from photos (hardware.md → As built). First 24 V power-up: the motor holds position. The user insulated the loose ends and confirmed the jumpers are on GPIO 4/5. Wrote `firmware/can_test` (read-only: 40H version, 31H position every second, bus status).
+  - **Milestone reached: the ESP32 talks to the motor over CAN.** Uploaded with arduino-cli through the COM port (`/dev/cu.usbmodem5C831103731`) and read the serial output from the Mac. Version and position replies are correct, with 0 bus errors (protocol.md → VERIFIED).
+  - Next: switch the motor to mode 05 (bus closed-loop, saved) and do a first small, slow test move. This needs the user's OK first.
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

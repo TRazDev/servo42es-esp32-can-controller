@@ -19,6 +19,15 @@ Everything below comes from the manual and is **UNVERIFIED** unless marked VERIF
 - **Speed encoding** (F4, F5, FE): uint16 speed, no direction bit. Direction comes from the sign of the target.
 - **acc** (0–255): speed changes by 1 RPM every `(256-acc) × 50 µs`. acc=0 means no ramp (instant).
 
+## VERIFIED on hardware (2026-09-11, firmware/can_test)
+Setup: ESP32-S3 TWAI on GPIO 4/5, 500 kbit/s, one 120 Ω terminator (on the module), motor ID 01, motor still in factory mode 03.
+- Standard 11-bit frames at **500 kbit/s** and **motor ID 01** work as documented. The bus ran with 0 TX/RX errors.
+- **CRC = (ID + bytes) & 0xFF** is correct in both directions (ID 01).
+- Replies come back on the **same CAN ID** (0x001).
+- **40H** reply `40 92 01 00 01 D5` = E series (b7=1), cal 1 (b5-4), **hardware 2 = S42ES_BUS**, **firmware V1.0.1**. It matches this manual's version.
+- **31H** reply `31 00 00 00 00 00 03 35` = 3 counts, byte for byte the same as the manual's example. The value stayed at 3 while the motor was holding.
+- Read commands work in pulse mode (03); bus mode isn't needed for them.
+
 ## Units
 | Quantity | Unit |
 |---|---|
