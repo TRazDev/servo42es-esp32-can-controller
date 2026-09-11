@@ -10,9 +10,11 @@ portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 ServoState state;
 uint32_t lastReplyMs = 0;
 
-// Fast telemetry, one request every POLL_STEP_MS in turn.
-const uint8_t FAST_POLL[] = {0x31, 0x32, 0x39, 0xF1, 0x3A, 0x3E, 0x37};
-constexpr uint32_t POLL_STEP_MS = 15;
+// Fast telemetry, one request every POLL_STEP_MS in turn. Position (31H) is
+// every other slot (50 Hz) for a smooth trace; the rest refresh every ~140 ms.
+const uint8_t FAST_POLL[] = {0x31, 0x32, 0x31, 0x39, 0x31, 0xF1, 0x31, 0x3A,
+                             0x31, 0x3E, 0x31, 0x37, 0x31, 0x3B};
+constexpr uint32_t POLL_STEP_MS = 10;
 constexpr uint32_t SLOW_POLL_MS = 2000;  // version and working mode
 uint8_t pollIndex = 0;
 uint32_t lastPollMs = 0;
@@ -41,6 +43,7 @@ void parse(const twai_message_t &msg) {
     case 0x3A: if (len == 3) state.enabled = d[1] == 1; break;
     case 0x3E: if (len == 3) state.stalled = d[1] == 1; break;
     case 0x37: if (len == 3) state.alarm = d[1]; break;
+    case 0x3B: if (len == 3) state.homed = d[1] == 1; break;
     case 0x82: if (len == 3) state.mode = d[1]; break;  // reply to "00 82" (read mode)
     case 0x40:
       if (len == 6) {

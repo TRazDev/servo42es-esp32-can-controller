@@ -33,7 +33,10 @@ Newest first. The top entry should always describe the current state.
   - Open: whether the position fully settles after "done".
   - Started the real firmware, `firmware/servo_controller`. **Step 1**: WiFi (station) + mDNS `servo-control.local` + CAN polling (31/32/39/F1/3A/3E/37 fast; 40 and mode slow) + a status page at `/` and JSON at `/api/status`. Read-only. Compiles with no warnings (D-012: no extra libraries).
   - **Step 1 VERIFIED end to end:** the ESP32 joined the WiFi (192.168.1.139), `servo-control.local` resolves, and `/api/status` shows the motor online (~67 CAN replies/s, V1.0.1, mode 05, enabled). Had to enable IPv6 to remove a 5 s `.local` delay on macOS (network.md).
-  - Next: the user checks the status page in the browser. Then step 2: WebSocket + port of the design/ UI + control commands.
+  - The user confirmed the step 1 page in the browser.
+  - **Step 2a done:** the design/ UI ported to plain HTML/CSS/JS (`ui/index.html`, 22 KB → 6.7 KB gzipped via `tools/build_ui.py`), served at `/`. The `/ws` WebSocket pushes telemetry at 20 Hz (measured 20.3 Hz). Position is polled at 50 Hz and other values every ~140 ms (~100 CAN requests/s). Live: header status, readouts, 10 s trace, alarms, homed flag, device info, mode banner. **All controls are shown but disabled.** Gear ratio is fixed at 1 (config.h) until 2c.
+  - Build: `arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB,CDCOnBoot=default" firmware/servo_controller`. Upload port: `/dev/cu.usbmodem5C831103731` (COM USB-C).
+  - Next: the user checks the UI in the browser. Then step 2b: controls (enable/disable, stop, E-STOP hold, jog with deadman, step, go-to, set zero). Then 2c: settings (gear ratio in NVS, motor params).
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

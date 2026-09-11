@@ -33,4 +33,6 @@ This repo: https://github.com/TRazDev/servo42es-esp32-can-controller (public, MI
 - Put verified protocol facts in docs/protocol.md. Mark anything unverified "UNVERIFIED".
 - At the end of a session, add an entry to docs/progress.md: what changed, what's next, open issues.
 - Keep this file short. Put details in docs/.
+- Firmware lives in firmware/servo_controller. The UI source is `ui/index.html`. After editing it, run `python3 tools/build_ui.py` to regenerate `index_html_gz.h` (committed), then rebuild.
+- Build/upload from the terminal with the arduino-cli bundled in the Arduino IDE. The FQBN and port are in docs/progress.md.
 - Git commits and PR descriptions: plain messages. No Claude signatures, session links or co-author lines. Mentions of Claude tools inside project files (e.g. Claude Design, CLAUDE.md) are fine.

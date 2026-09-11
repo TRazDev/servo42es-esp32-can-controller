@@ -12,3 +12,9 @@ constexpr const char *HOSTNAME = "servo-control";
 
 // A motor counts as offline if nothing was received for this long.
 constexpr uint32_t MOTOR_TIMEOUT_MS = 500;
+
+// Motor turns per joint turn. 1 = bare motor on the bench. Moves to settings (NVS) in step 2c.
+constexpr float GEAR_RATIO = 1.0f;
+
+// Telemetry pushed to the browser over the WebSocket.
+constexpr uint32_t TELEMETRY_INTERVAL_MS = 50;  // 20 Hz

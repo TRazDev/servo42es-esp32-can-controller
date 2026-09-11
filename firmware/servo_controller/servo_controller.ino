@@ -22,6 +22,7 @@
 
 bool wifiWasConnected = false;
 bool mdnsStarted = false;
+uint32_t lastTelemetryMs = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -45,6 +46,11 @@ void setup() {
 
 void loop() {
   servo::update();
+
+  if (millis() - lastTelemetryMs >= TELEMETRY_INTERVAL_MS) {
+    lastTelemetryMs = millis();
+    web::publishTelemetry();
+  }
 
   const bool connected = WiFi.status() == WL_CONNECTED;
   if (connected != wifiWasConnected) {

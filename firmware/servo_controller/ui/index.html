@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SERVO / J1</title>
+<style>
+  :root { --ink:#111110; --paper:#fff; --line:#dcdad4; --line2:#e6e4df; --muted:#a8a5a0; --muted2:#8a8780;
+          --dim:#6d6a64; --red:#c8371c; --org:#c07a14; --grn:#1f7a45; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; background:var(--paper); color:var(--ink); }
+  body { font-family:ui-monospace,'DejaVu Sans Mono',Menlo,Consolas,monospace; font-size:12px; letter-spacing:.07em;
+         padding:18px; min-height:100vh; display:flex; flex-direction:column; gap:16px; }
+  button, input, select { font:inherit; letter-spacing:inherit; }
+  button { cursor:pointer; }
+  button:disabled, .locked { opacity:.38; cursor:not-allowed; }
+  [hidden] { display:none !important; }
+  @keyframes blink { 0%,55%{opacity:1} 56%,100%{opacity:.25} }
+
+  .lbl { font-size:9px; color:var(--muted); letter-spacing:.18em; }
+  .sec { border-bottom:1px solid var(--line); padding-bottom:4px; font-size:9px; letter-spacing:.2em; color:var(--muted);
+         display:flex; justify-content:space-between; }
+  .note { font-size:10px; color:var(--muted); }
+
+  header { display:flex; flex-wrap:wrap; align-items:flex-end; gap:24px; border-bottom:1px solid var(--ink); padding-bottom:12px; }
+  .title .t1 { font-size:17px; font-weight:700; letter-spacing:.02em; }
+  .title .t2 { font-size:10px; color:var(--muted2); margin-top:3px; }
+  .stats { display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap; }
+  .stat { display:flex; flex-direction:column; gap:3px; }
+  .stat .val { font-size:12px; display:flex; align-items:center; gap:6px; }
+  .dot { width:7px; height:7px; display:inline-block; background:currentColor; }
+  .joints { display:flex; gap:3px; }
+  .joints button { width:22px; height:22px; padding:0; font-size:10px; border:1px solid var(--line); background:transparent; color:#b4b1aa; }
+  .joints button.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .hright { margin-left:auto; display:flex; align-items:center; gap:12px; }
+  .fault { border:1px solid var(--red); color:var(--red); padding:5px 9px; font-size:11px; animation:blink 1.2s steps(1,end) infinite; }
+  .estop { border:1px solid var(--red); background:var(--red); color:#fff; font-size:13px; font-weight:700; letter-spacing:.16em;
+           padding:14px 26px; min-width:150px; }
+
+  nav { display:flex; gap:30px; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+  nav button { border:none; border-bottom:2px solid transparent; background:transparent; color:var(--muted2);
+               padding:0 0 9px; margin-bottom:-1px; font-size:12px; letter-spacing:.16em; }
+  nav button.on { border-bottom-color:var(--ink); color:var(--ink); }
+  nav button.dim { color:#b4b1aa; }
+
+  .banner { border:1px solid var(--red); background:#fdefec; color:var(--red); padding:9px 12px; font-size:11px;
+            display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .banner b { font-weight:700; }
+  .banner .sub { color:var(--dim); }
+  .banner.warn { border-color:var(--org); background:#fdf6e8; color:#8a5c05; }
+
+  .grid1 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
+  .col { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .big { font-size:52px; line-height:1.05; font-weight:700; letter-spacing:-.01em; }
+  .mid { font-size:26px; font-weight:700; border-top:1px solid var(--line); padding-top:4px; margin-top:4px; }
+  .pair { display:flex; gap:18px; } .pair > div { flex:1; }
+  .bar { height:6px; background:#e2e0da; margin-top:6px; } .bar > div { height:100%; background:var(--ink); width:0; }
+  .chartcol { grid-column:span 2; }
+  @media (max-width:640px) { .chartcol { grid-column:auto; } }
+  canvas { width:100%; height:auto; display:block; background:#fff; border:1px solid var(--line); }
+  .legend { display:flex; gap:20px; font-size:9px; letter-spacing:.16em; color:var(--muted); flex-wrap:wrap; }
+  .legend span { display:flex; align-items:center; gap:6px; } .legend i { width:16px; height:2px; display:inline-block; }
+
+  .btn { border:1px solid var(--ink); background:transparent; color:var(--ink); padding:11px; font-size:11px; }
+  .btn.solid { background:var(--ink); color:#fff; font-weight:700; letter-spacing:.2em; padding:13px; }
+  .btn.grn { border-color:var(--grn); color:var(--grn); font-weight:700; }
+  .btn.org { border-color:var(--org); color:var(--org); font-weight:700; }
+  .btn.red { border-color:var(--red); color:var(--red); font-weight:700; }
+  .btn.dash { border:1px dashed #cfccc5; color:#b4b1aa; }
+  .row { display:flex; gap:8px; } .row > * { flex:1; }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; } .steps button { flex:1; min-width:54px; padding:8px 4px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field input { border:none; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); padding:5px 0; font-size:15px; width:100%; }
+  .field input.big2 { border-bottom-color:var(--ink); font-size:28px; font-weight:700; padding:6px 0; }
+  .kv { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line2); font-size:11px; }
+  .kv span:first-child { color:var(--dim); }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; }
+  .chips span { border:1px solid #c4c1ba; color:#c4c1ba; padding:3px 6px; font-size:10px; }
+  .chips span.on { border-color:var(--red); color:var(--red); }
+  .pending { font-size:10px; color:var(--org); letter-spacing:.14em; }
+
+  .placeholder { border:1px dashed #cfccc5; padding:48px; display:flex; flex-direction:column; align-items:center; gap:16px;
+                 color:var(--muted2); text-align:center; line-height:1.8; }
+  footer { margin-top:auto; border-top:1px solid var(--line); padding-top:8px; display:flex; gap:20px; font-size:9px;
+           letter-spacing:.16em; color:#b4b1aa; flex-wrap:wrap; }
+  footer .r { margin-left:auto; }
+  .c-grn { color:var(--grn); } .c-org { color:var(--org); } .c-red { color:var(--red); } .c-mut { color:var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title"><div class="t1">SERVO / J1</div><div class="t2">MKS42ES &middot; CAN &middot; ESP32-S3</div></div>
+  <div class="stats">
+    <div class="stat"><span class="lbl">WIFI</span><span class="val" id="wifi"><i class="dot"></i><b>&mdash;</b></span></div>
+    <div class="stat"><span class="lbl">CAN</span><span class="val" id="can"><i class="dot"></i><b>&mdash;</b></span></div>
+    <div class="stat"><span class="lbl">MOTOR</span><span class="val" id="motor">&mdash;</span></div>
+    <div class="stat"><span class="lbl">MOTION</span><span class="val" id="motion">&mdash;</span></div>
+    <div class="stat"><span class="lbl">JOINT</span>
+      <div class="joints"><button class="on">J1</button><button disabled>J2</button><button disabled>J3</button><button disabled>J4</button><button disabled>J5</button><button disabled>J6</button></div>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="fault" id="fault" hidden></div>
+    <button class="estop" id="estop" disabled title="Wired up in firmware step 2b">E-STOP</button>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="control" class="on">MISSION CONTROL</button>
+  <button data-tab="settings">SETTINGS</button>
+  <button data-tab="advanced">ADVANCED</button>
+  <button data-tab="arm" class="dim">ARM / LOCKED</button>
+</nav>
+
+<!-- ===================== CONTROL ===================== -->
+<section id="tab-control" class="col" style="gap:16px">
+  <div class="banner" id="offlineBanner" hidden><b>LINK DOWN</b><span class="sub" id="offlineText">READOUTS ARE STALE</span></div>
+  <div class="banner" id="modeBanner" hidden><b>WRONG CONTROL MODE</b><span class="sub" id="modeText"></span></div>
+  <div class="banner" id="stallBanner" hidden><b>STALL DETECTED</b><span class="sub">MOTION HALTED &middot; SHAFT DEVIATION EXCEEDED TOLERANCE</span></div>
+  <div class="banner warn" id="zeroBanner" hidden><b>NOT ZEROED</b><span>ABSOLUTE MOVES ARE MEANINGLESS UNTIL ZERO IS SET OR HOMING RUNS.</span></div>
+
+  <div class="grid1">
+    <div class="col" id="readout" style="gap:14px">
+      <div class="sec"><span>READOUT</span></div>
+      <div><div class="lbl">JOINT ANGLE / DEG</div><div class="big" id="angle">&mdash;</div></div>
+      <div class="pair">
+        <div><div class="lbl">SPEED / DEG&middot;S</div><div class="mid" id="speed">&mdash;</div></div>
+        <div><div class="lbl">POS ERROR / DEG</div><div class="mid" id="err">&mdash;</div></div>
+      </div>
+      <div>
+        <div class="lbl" style="display:flex;justify-content:space-between"><span>TARGET</span><span style="color:var(--ink)">----</span></div>
+        <div class="bar"><div></div></div>
+      </div>
+    </div>
+    <div class="col chartcol" style="gap:10px">
+      <div class="sec"><span>TRACE / LAST 10 S</span><span id="scale"></span></div>
+      <canvas id="chart" width="1160" height="240"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--ink)"></i>ANGLE</span>
+        <span><i style="background:var(--org)"></i>POS ERROR &times;20</span>
+        <span style="margin-left:auto" id="rate">WS &mdash;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="col">
+      <div class="sec"><span>DRIVE</span><span class="pending">CONTROLS: FIRMWARE STEP 2B</span></div>
+      <div class="row">
+        <button class="btn grn" disabled>ENABLE</button>
+        <button class="btn" disabled>DISABLE</button>
+        <button class="btn org" disabled>STOP</button>
+      </div>
+      <div class="note">DISABLE RELEASES THE SHAFT &middot; FREE ROTATION</div>
+      <div class="col locked" style="gap:9px;border-top:1px solid var(--line2);padding-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em"><span>JOG / HOLD TO MOVE</span><span class="c-mut">20 DEG&middot;S</span></div>
+        <div class="row"><button class="btn" style="padding:16px;font-size:16px" disabled>&#9664;&#9664;</button><button class="btn" style="padding:16px;font-size:16px" disabled>&#9654;&#9654;</button></div>
+        <input type="range" min="1" max="120" value="20" disabled style="width:100%;accent-color:var(--ink)">
+        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em;margin-top:6px"><span>STEP</span><span class="c-mut">1 DEG</span></div>
+        <div class="steps"><button class="btn" disabled>0.1 DEG</button><button class="btn" disabled>1 DEG</button><button class="btn" disabled>10 DEG</button><button class="btn" disabled>45 DEG</button></div>
+        <div class="row"><button class="btn" disabled>&minus; STEP</button><button class="btn" disabled>STEP +</button></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="sec"><span>ABSOLUTE MOVE</span></div>
+      <div class="col locked" style="gap:11px">
+        <div class="field"><span class="lbl">TARGET ANGLE / DEG</span><input class="big2" type="number" value="90.00" disabled></div>
+        <div class="pair" style="gap:14px">
+          <div class="field"><span class="lbl">SPEED / DEG&middot;S</span><input type="number" value="30" disabled></div>
+          <div class="field"><span class="lbl">ACCEL / DEG&middot;S2</span><input type="number" value="60" disabled></div>
+        </div>
+        <button class="btn solid" disabled>GO &#9654;</button>
+        <div class="row"><button class="btn" disabled>GO TO ZERO</button><button class="btn" disabled>SET ZERO</button></div>
+        <button class="btn dash" disabled>HOME &mdash; NOT CONFIGURED</button>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="sec"><span>REFERENCE &amp; I/O</span></div>
+      <div>
+        <div class="kv"><span>ZERO</span><span id="zero" class="c-org">NOT ZEROED</span></div>
+        <div class="kv"><span>HOMED</span><span id="homed" class="c-mut">&mdash;</span></div>
+        <div class="kv"><span>LIMIT &middot; HOME/LEFT</span><span class="c-mut">NOT CONFIGURED</span></div>
+        <div class="kv"><span>LIMIT &middot; RIGHT</span><span class="c-mut">NOT CONFIGURED</span></div>
+      </div>
+      <div class="col" style="gap:7px">
+        <span class="lbl">ALARM REGISTER</span>
+        <div class="chips" id="alarms">
+          <span data-a="2">OVERCURRENT</span><span data-a="3">PHASE LOSS</span><span data-a="4">OVERVOLTAGE</span>
+          <span data-a="5">UNDERVOLTAGE</span><span data-a="6">POS ERROR</span><span data-a="7">ENCODER</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SETTINGS ===================== -->
+<section id="tab-settings" hidden>
+  <div class="placeholder">
+    <div style="font-size:13px;letter-spacing:.2em">SETTINGS / FIRMWARE STEP 2C</div>
+    <div class="note" style="max-width:460px">GEAR RATIO, DIRECTION, RUN CURRENT, STALL PROTECTION, LINK-LOSS TIMEOUT, HOMING AND LIMIT SWITCHES
+      WILL BE EDITABLE HERE AND SAVED TO THE MOTOR.</div>
+    <div class="note">CURRENT GEAR RATIO: 1:<span id="gear2">&mdash;</span></div>
+  </div>
+</section>
+
+<!-- ===================== ADVANCED ===================== -->
+<section id="tab-advanced" hidden>
+  <div class="grid2" style="gap:26px;align-items:start">
+    <div class="col" style="gap:10px">
+      <div class="sec"><span>CONTROL MODE</span></div>
+      <div class="kv"><span>REPORTED</span><span id="modeLabel">&mdash;</span></div>
+      <div class="kv"><span>REQUIRED</span><span>BUS CLOSED-LOOP FOC</span></div>
+    </div>
+    <div class="col" style="gap:10px">
+      <div class="sec" style="border-color:var(--org);color:var(--org)"><span>ENCODER CALIBRATION</span></div>
+      <div style="font-size:11px;color:#8a5c05;line-height:1.7">MOTOR MUST CARRY NO LOAD. IT WILL SPIN 20+ TURNS AT 600 RPM, THEN RESTART. RUN THIS BEFORE MOUNTING INTO THE ARM.</div>
+      <button class="btn org" disabled>RUN CALIBRATION</button>
+    </div>
+    <div class="col" style="gap:10px">
+      <div class="sec"><span>MAINTENANCE</span></div>
+      <button class="btn" disabled>RESTART MOTOR</button>
+      <button class="btn red" disabled>FACTORY RESET</button>
+      <div class="note">FACTORY RESET RESTORES MOTOR DEFAULTS (MODE, CAN ID AND BITRATE INCLUDED) AND RESTARTS IT. THE GEAR RATIO IS STORED ON THE ESP32 AND IS KEPT.</div>
+    </div>
+    <div class="col" style="gap:10px">
+      <div class="sec"><span>DEVICE</span></div>
+      <div class="kv"><span>FIRMWARE</span><span id="fw">&mdash;</span></div>
+      <div class="kv"><span>HARDWARE</span><span id="hw">&mdash;</span></div>
+      <div class="kv"><span>MOTOR ID</span><span id="mid">&mdash;</span></div>
+      <div class="kv"><span>CAN BITRATE</span><span>500 KBIT/S</span></div>
+      <div class="kv"><span>WIFI SIGNAL</span><span id="rssi">&mdash;</span></div>
+      <div class="kv"><span>ESP32 UPTIME</span><span id="uptime">&mdash;</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ARM ===================== -->
+<section id="tab-arm" hidden>
+  <div class="placeholder">
+    <div style="font-size:13px;letter-spacing:.2em">ARM OVERVIEW / RESERVED</div>
+    <div class="note" style="max-width:460px">SIX-JOINT COORDINATED MOTION, TRAJECTORIES AND KINEMATICS LAND HERE. OUT OF SCOPE FOR V1.</div>
+  </div>
+</section>
+
+<footer>
+  <span id="wsLabel">WS &mdash;</span>
+  <span>RX <span id="rx">0</span> FRAMES</span>
+  <span>GEAR 1:<span id="gear">&mdash;</span></span>
+  <span class="r">ESP32-S3 &middot; <span id="host"></span></span>
+</footer>
+
+<script>
+'use strict';
+const INK = '#111110', ORG = '#c07a14';
+const $ = id => document.getElementById(id);
+const HIST = 200;              // 10 s at 20 Hz
+const STALE_MS = 1000;         // no telemetry for this long = link lost
+
+let ws = null, wsState = 'connecting', lastMsg = 0, msgCount = 0, rate = 0;
+let tel = null;                // latest telemetry from the ESP32
+const hist = [];
+
+$('host').textContent = location.hostname || 'local file';
+
+// ---- tabs ----
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['control', 'settings', 'advanced', 'arm'].forEach(t => $('tab-' + t).hidden = t !== b.dataset.tab);
+});
+
+// ---- websocket ----
+function connect() {
+  wsState = 'connecting';
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || 'servo-control.local') + '/ws');
+  ws.onopen = () => { wsState = 'open'; };
+  ws.onmessage = ev => {
+    try { tel = JSON.parse(ev.data); } catch (e) { return; }
+    lastMsg = performance.now(); msgCount++;
+    hist.push([tel.pos, tel.err]);
+    if (hist.length > HIST) hist.splice(0, hist.length - HIST);
+  };
+  ws.onclose = () => { wsState = 'closed'; setTimeout(connect, 1000); };
+  ws.onerror = () => ws.close();
+}
+connect();
+setInterval(() => { rate = msgCount; msgCount = 0; }, 1000);
+
+// ---- rendering ----
+function setStatus(el, text, cls) {
+  el.className = 'val ' + (cls || '');
+  const b = el.querySelector('b'); if (b) b.textContent = text; else el.textContent = text;
+}
+const MOTION = { 0: '—', 1: 'STOPPED', 2: 'ACCELERATING', 3: 'DECELERATING', 4: 'CRUISING', 5: 'HOMING' };
+const ALARM = { 2: 'OVERCURRENT', 3: 'PHASE LOSS', 4: 'OVERVOLTAGE', 5: 'UNDERVOLTAGE', 6: 'POSITION ERROR', 7: 'ENCODER ERROR' };
+const MODES = { 0: 'PULSE+PULSE OPEN-LOOP', 1: 'PULSE+DIR OPEN-LOOP', 2: 'PULSE+PULSE CLOSED-LOOP', 3: 'PULSE+DIR CLOSED-LOOP',
+                4: 'BUS OPEN-LOOP', 5: 'BUS CLOSED-LOOP FOC', 16: 'PULSE+PULSE (NO ENC)', 17: 'PULSE+DIR (NO ENC)', 20: 'BUS OPEN-LOOP (NO ENC)' };
+const HW = { 1: 'S42ES RS485', 2: 'S42ES BUS', 3: 'S57ES RS485', 4: 'S57ES BUS' };
+
+function render() {
+  const now = performance.now();
+  const live = wsState === 'open' && tel && now - lastMsg < STALE_MS;
+  const motorOn = live && tel.on;
+
+  setStatus($('wifi'), live ? 'CONNECTED' : wsState === 'open' || wsState === 'connecting' ? 'RECONNECTING' : 'LOST',
+            live ? 'c-grn' : wsState === 'closed' ? 'c-red' : 'c-org');
+  setStatus($('can'), !live ? 'UNKNOWN' : tel.on ? 'OK' : 'NO RESPONSE', !live ? 'c-mut' : tel.on ? 'c-grn' : 'c-red');
+  setStatus($('motor'), motorOn ? (tel.en ? 'ENABLED' : 'DISABLED') : 'UNKNOWN', motorOn ? (tel.en ? 'c-grn' : 'c-org') : 'c-mut');
+  $('motion').textContent = motorOn ? (tel.stall ? 'STALLED' : MOTION[tel.run] || '—') : 'NO LINK';
+
+  const fault = motorOn && tel.stall ? 'STALL' : motorOn && ALARM[tel.alm] ? ALARM[tel.alm] : motorOn && tel.mode >= 0 && tel.mode !== 5 ? 'MODE' : '';
+  $('fault').hidden = !fault; $('fault').textContent = '! ' + fault;
+
+  $('offlineBanner').hidden = motorOn;
+  $('offlineText').textContent = !live ? 'NO CONNECTION TO THE ESP32 · READOUTS ARE STALE' : 'MOTOR NOT RESPONDING ON CAN · CHECK MOTOR POWER';
+  $('modeBanner').hidden = !(motorOn && tel.mode >= 0 && tel.mode !== 5);
+  if (motorOn) $('modeText').textContent = 'MOTOR REPORTS ' + (MODES[tel.mode] || 'MODE ' + tel.mode) + ' · REQUIRED: BUS CLOSED-LOOP FOC';
+  $('stallBanner').hidden = !(motorOn && tel.stall);
+  $('zeroBanner').hidden = !motorOn;
+
+  $('readout').style.opacity = motorOn ? 1 : 0.4;
+  if (tel) {
+    $('angle').textContent = tel.pos.toFixed(2);
+    $('speed').textContent = tel.spd.toFixed(2);
+    $('err').textContent = tel.err.toFixed(3);
+    $('err').className = 'mid ' + (Math.abs(tel.err) > 1.5 ? 'c-red' : Math.abs(tel.err) > 0.5 ? 'c-org' : '');
+    $('homed').textContent = tel.homed ? 'HOMED' : 'NOT HOMED';
+    $('homed').className = tel.homed ? 'c-grn' : 'c-mut';
+    document.querySelectorAll('#alarms span').forEach(s => s.classList.toggle('on', motorOn && tel.alm === +s.dataset.a));
+    $('modeLabel').textContent = tel.mode >= 0 ? (MODES[tel.mode] || 'MODE ' + tel.mode) : '—';
+    $('modeLabel').className = tel.mode === 5 ? 'c-grn' : 'c-red';
+    $('fw').textContent = tel.fw || '—';
+    $('hw').textContent = HW[tel.hw] || (tel.hw ? 'TYPE ' + tel.hw : '—');
+    $('mid').textContent = '0x' + tel.id.toString(16).padStart(2, '0').toUpperCase();
+    $('rssi').textContent = tel.rssi + ' DBM';
+    $('uptime').textContent = tel.up + ' S';
+    $('rx').textContent = tel.rx;
+    $('gear').textContent = $('gear2').textContent = +tel.gear.toFixed(3);
+  }
+  $('wsLabel').textContent = 'WS ' + (live ? 'OPEN ' + rate + 'HZ' : wsState === 'closed' ? 'CLOSED' : 'CONNECTING');
+  $('rate').textContent = 'WS ' + rate + ' HZ';
+  draw(!motorOn);
+  requestAnimationFrame(render);
+}
+
+function draw(stale) {
+  const c = $('chart'), g = c.getContext('2d'), W = c.width, H = c.height;
+  g.clearRect(0, 0, W, H);
+  g.strokeStyle = '#e6e4df'; g.lineWidth = 1;
+  for (let x = 0; x <= W; x += 58) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y <= H; y += 48) { g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  g.strokeStyle = '#cfccc5'; g.setLineDash([3, 5]);
+  g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke(); g.setLineDash([]);
+  if (hist.length < 2) { $('scale').textContent = ''; return; }
+
+  // The angle is centred on the middle of its range in the window; minimum span 10 deg.
+  let lo = Infinity, hi = -Infinity;
+  for (const [a] of hist) { lo = Math.min(lo, a); hi = Math.max(hi, a); }
+  const mid = (lo + hi) / 2, half = Math.max(5, (hi - lo) * 0.6);
+  $('scale').textContent = 'CENTRE ' + mid.toFixed(1) + ' · ±' + half.toFixed(1) + ' DEG';
+  const off = HIST - hist.length;
+  const px = i => Math.round(((i + off) / (HIST - 1)) * W / 3) * 3;
+  const py = v => Math.round((H / 2 - (Math.max(-half, Math.min(half, v)) / half) * (H / 2 - 8)) / 3) * 3;
+  g.globalAlpha = stale ? 0.3 : 1;
+  g.fillStyle = INK; hist.forEach(([a], i) => g.fillRect(px(i), py(a - mid), 3, 3));
+  g.fillStyle = ORG; hist.forEach(([, e], i) => g.fillRect(px(i), py(e * 20), 3, 3));
+  g.globalAlpha = 1;
+}
+
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

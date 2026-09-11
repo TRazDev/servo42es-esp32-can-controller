@@ -16,6 +16,7 @@ struct ServoState {
   uint8_t runStatus = 0;      // F1H: 1 stopped, 2 accel, 3 decel, 4 full speed, 5 homing
   uint8_t alarm = 0;          // 37H: 0 running, 1 stopped, 2+ = fault
   bool stalled = false;       // 3EH
+  bool homed = false;         // 3BH
 };
 
 namespace servo {
