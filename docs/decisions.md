@@ -5,6 +5,12 @@ Don't delete old entries. If a decision changes, add a new entry that says it su
 
 ---
 
+## D-011 — Network details: servo-control.local, no login (2026-09-11)
+- **Decision:** the ESP32 announces itself as `servo-control.local` (mDNS) on the home 2.4 GHz WiFi (UniFi APs), and prints its IP on the serial monitor. No login in v1.
+- **Alternatives:** a fixed IP reserved in the router; a PIN before the controls unlock.
+- **Why:** a memorable address with no router setup. It's a trusted home network.
+- **Consequences:** anyone on the WiFi can control the motor. Revisit before the arm is used around other people. UniFi troubleshooting notes are in network.md.
+
 ## D-010 — Public repo under the MIT license (2026-09-11)
 - **Decision:** the GitHub repo is public, under the MIT license (copyright "Traz"). The Makerbase manual and design/support.js stay in the repo.
 - **Alternatives:** Apache-2.0, GPL-3.0; removing the third-party files first.

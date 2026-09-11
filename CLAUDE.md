@@ -15,6 +15,7 @@ See docs/progress.md (top entry = latest state and next steps).
 
 ## Knowledge base
 - docs/hardware.md — components, wiring, pinout, power settings
+- docs/network.md — WiFi, http://servo-control.local, UniFi troubleshooting
 - docs/protocol.md — SERVO42ES CAN protocol notes (commands, frame formats, gotchas)
 - docs/gui.md — GUI spec: v1 scope, gear-ratio math, zeroing plan
 - docs/design-brief.md — self-contained UI brief for Claude Design (the GUI is a web page served by the ESP32)

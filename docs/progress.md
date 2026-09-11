@@ -23,9 +23,9 @@ Newest first. The top entry should always describe the current state.
   - D-008: join home WiFi only
   - D-009: Arduino IDE + ESP32 core 3.3.11
   - D-010: public repo, MIT
+  - D-011: http://servo-control.local, no login
 - **Next:**
-  1. Discuss network details: credentials, how the browser finds the ESP32 (the user wants this as a separate topic)
-  2. Wire it up and choose the CAN pins in hardware.md
-  3. First milestone: send one CAN command and read back a response
-  4. Port the UI and wire it to the firmware
+  1. Wire it up and choose the CAN pins in hardware.md
+  2. First milestone: send one CAN command and read back a response
+  3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md
