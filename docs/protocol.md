@@ -26,7 +26,14 @@ Setup: ESP32-S3 TWAI on GPIO 4/5, 500 kbit/s, one 120 Ω terminator (on the modu
 - Replies come back on the **same CAN ID** (0x001).
 - **40H** reply `40 92 01 00 01 D5` = E series (b7=1), cal 1 (b5-4), **hardware 2 = S42ES_BUS**, **firmware V1.0.1**. It matches this manual's version.
 - **31H** reply `31 00 00 00 00 00 03 35` = 3 counts, byte for byte the same as the manual's example. The value stayed at 3 while the motor was holding.
-- Read commands work in pulse mode (03); bus mode isn't needed for them.
+- **00H** read-parameter works: `00 82` → `82 05` = the motor was **already in mode 05** (bus closed-loop FOC) out of the box, before anything was written. The manual says the factory default is 03, but this CAN unit shipped in 05.
+
+## VERIFIED first motion (2026-09-11, firmware/move_test)
+- **F3 01** (enable) → `F3 01` (status 1).
+- **F4** relative move `F4 00 3C 02 00 10 00` (60 RPM, acc 2, +4096 counts) → `F4 01` (started), then `F4 02` (done). With the default response mode 02, both replies arrive.
+- Positive F4 counts → encoder count increases. Start 3, then **4082 after +4096** (0.37° short), then **5 after −4096**.
+- Open: which way the shaft physically turns for +counts, seen from the shaft end.
+- Open: the "done" reply probably comes once within the 98H position-reached threshold (default 800/65535 × 360° ≈ 4.4°). The position was read right after "done" and may not have settled yet. Check by reading again ~0.5 s later.
 
 ## Units
 | Quantity | Unit |
@@ -39,7 +46,7 @@ Setup: ESP32-S3 TWAI on GPIO 4/5, 500 kbit/s, one 120 Ω terminator (on the modu
 | Speed (32H) | RPM, int16; CCW > 0, CW < 0 |
 
 ## Required setup for CAN control
-The factory default mode is 03 (pulse + direction). The motion commands below only work in bus mode.
+The manual says the factory default mode is 03 (pulse + direction), but our CAN unit arrived already in 05 (VERIFIED). The motion commands below only work in bus mode.
 1. `82 05`: set bus closed-loop FOC mode
 2. `60 01`: save to flash
 3. `F3 01`: enable the motor (in bus mode, enable is set by command and the En pin is ignored)
