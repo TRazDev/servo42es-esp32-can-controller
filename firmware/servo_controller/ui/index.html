@@ -145,7 +145,8 @@
 <section id="tab-control" class="col" style="gap:16px">
   <div class="banner" id="offlineBanner" hidden><b>LINK DOWN</b><span class="sub" id="offlineText">READOUTS ARE STALE</span></div>
   <div class="banner" id="estopBanner" hidden><b>E-STOP ENGAGED</b><span class="sub">MOTION BLOCKED &middot; THE MOTOR HOLDS POSITION</span><button id="btnRelease">RELEASE E-STOP</button></div>
-  <div class="banner" id="modeBanner" hidden><b>WRONG CONTROL MODE</b><span class="sub" id="modeText"></span></div>
+  <div class="banner" id="modeBanner" hidden><b>WRONG CONTROL MODE</b><span class="sub" id="modeText"></span><button id="btnFixMode">FIX NOW</button></div>
+  <div class="banner warn" id="calBanner" hidden><b>CALIBRATING</b><span>WATCH THE MOTOR LED: FAST GREEN FLASHING = SUCCESS, FAST RED = FAILED. THEN SWITCH THE MOTOR POWER OFF AND ON.</span></div>
   <div class="banner" id="stallBanner" hidden><b>STALL DETECTED</b><span class="sub">MOTION HALTED &middot; SHAFT DEVIATION EXCEEDED TOLERANCE</span><button id="btnClearStall">CLEAR STALL</button></div>
   <div class="banner warn" id="zeroBanner" hidden><b>NOT ZEROED</b><span>ANGLES ARE RELATIVE TO WHERE THE MOTOR POWERED UP UNTIL ZERO IS SET OR HOMING RUNS.</span></div>
 
@@ -275,17 +276,20 @@
       <div class="sec"><span>CONTROL MODE</span></div>
       <div class="kv"><span>REPORTED</span><span id="modeLabel">&mdash;</span></div>
       <div class="kv"><span>REQUIRED</span><span>BUS CLOSED-LOOP FOC</span></div>
+      <button class="btn red" id="btnFixMode2">SET BUS CLOSED-LOOP FOC</button>
+      <div class="note">ONLY NEEDED IF THE MOTOR REPORTS ANOTHER MODE, E.G. AFTER A FACTORY RESET.</div>
     </div>
     <div class="col" style="gap:10px">
-      <div class="sec" style="border-color:var(--org);color:var(--org)"><span>ENCODER CALIBRATION</span><span class="pending">LATER STEP</span></div>
+      <div class="sec" style="border-color:var(--org);color:var(--org)"><span>ENCODER CALIBRATION</span></div>
       <div style="font-size:11px;color:#8a5c05;line-height:1.7">MOTOR MUST CARRY NO LOAD. IT WILL SPIN 20+ TURNS AT 600 RPM, THEN RESTART. RUN THIS BEFORE MOUNTING INTO THE ARM.</div>
-      <button class="btn org" disabled>RUN CALIBRATION</button>
+      <div class="note">THE MOTOR IS FACTORY-CALIBRATED. ONLY RECALIBRATE IF IT VIBRATES OR SOUNDS DIFFERENT IN EACH DIRECTION. AFTERWARDS, SWITCH THE MOTOR POWER OFF AND ON.</div>
+      <button class="btn org" id="btnCalibrate">RUN CALIBRATION</button>
     </div>
     <div class="col" style="gap:10px">
-      <div class="sec"><span>MAINTENANCE</span><span class="pending">LATER STEP</span></div>
-      <button class="btn" disabled>RESTART MOTOR</button>
-      <button class="btn red" disabled>FACTORY RESET</button>
-      <div class="note">FACTORY RESET RESTORES MOTOR DEFAULTS (MODE, CAN ID AND BITRATE INCLUDED) AND RESTARTS IT. THE GEAR RATIO IS STORED ON THE ESP32 AND IS KEPT.</div>
+      <div class="sec"><span>MAINTENANCE</span></div>
+      <button class="btn" id="btnRestart">RESTART MOTOR</button>
+      <button class="btn red" id="btnFactory">FACTORY RESET</button>
+      <div class="note">FACTORY RESET RESTORES THE MOTOR'S DEFAULTS (RUN CURRENT, STALL PROTECTION, LINK-LOSS TIMEOUT, POSSIBLY THE CONTROL MODE) AND RESTARTS IT. GEAR RATIO AND INVERT ARE STORED ON THE ESP32 AND ARE KEPT.</div>
     </div>
     <div class="col" style="gap:10px">
       <div class="sec"><span>DEVICE</span></div>
@@ -481,6 +485,22 @@ function applyGear() {
   $('cap').textContent = tel.maxrpm + ' RPM (MOTOR)';
 }
 
+// ---------- advanced ----------
+const fixMode = () => ask('CONFIRM / SET CONTROL MODE',
+  'THE MOTOR IS SWITCHED TO BUS CLOSED-LOOP FOC AND THE SETTING IS SAVED IN THE MOTOR. THE SHAFT MAY TWITCH.',
+  'SET FOC MODE', RED, () => send({ c: 'fixmode' }));
+$('btnFixMode').onclick = fixMode;
+$('btnFixMode2').onclick = fixMode;
+$('btnRestart').onclick = () => ask('CONFIRM / RESTART MOTOR',
+  'THE MOTOR REBOOTS. MOTION STOPS, THE SHAFT MAY BRIEFLY GO FREE, AND THE ZERO IS LOST (THE POSITION COUNTER STARTS AGAIN NEAR 0).',
+  'RESTART', ORG, () => send({ c: 'restart' }));
+$('btnFactory').onclick = () => ask('CONFIRM / FACTORY RESET',
+  'ALL SETTINGS STORED IN THE MOTOR RETURN TO FACTORY DEFAULTS: RUN CURRENT, STALL PROTECTION, LINK-LOSS TIMEOUT, CAN ID (01) AND BITRATE (500K), AND POSSIBLY THE CONTROL MODE. THE MOTOR RESTARTS AND THE ZERO IS LOST. GEAR RATIO AND INVERT ON THE ESP32 ARE KEPT. THIS CANNOT BE UNDONE.',
+  'ERASE MOTOR SETTINGS', RED, () => send({ c: 'factoryreset' }));
+$('btnCalibrate').onclick = () => ask('CONFIRM / ENCODER CALIBRATION',
+  'THE MOTOR MUST BE COMPLETELY UNLOADED: NOTHING ON THE SHAFT, NOT MOUNTED IN THE ARM. IT RESTARTS AND SPINS 20+ TURNS AT 600 RPM FOR ABOUT 10 S. FAST GREEN LED FLASHING = SUCCESS, FAST RED = FAILED. AFTERWARDS YOU MUST SWITCH THE MOTOR POWER OFF AND ON.',
+  'CALIBRATE', ORG, () => send({ c: 'calibrate' }));
+
 // ---------- settings ----------
 const SETTING_KEYS = ['gear', 'inv', 'cur', 'son', 'stol', 'hb'];
 let loaded = null;                 // as last reported by the ESP32 (unknown motor values -> defaults)
@@ -567,6 +587,11 @@ function render() {
   $('modeBanner').hidden = !(on && tel.mode >= 0 && tel.mode !== 5);
   if (on) $('modeText').textContent = 'MOTOR REPORTS ' + (MODES[tel.mode] || 'MODE ' + tel.mode) + ' · REQUIRED: BUS CLOSED-LOOP FOC · MOTION BLOCKED';
   $('stallBanner').hidden = !(on && tel.stall);
+  $('calBanner').hidden = !(tel && tel.cal);
+  const idle = on && !tel.jog && tel.tgt === null;
+  $('btnRestart').disabled = $('btnFactory').disabled = !idle;
+  $('btnCalibrate').disabled = !idle || tel.es || tel.cal;
+  $('btnFixMode2').disabled = !idle || tel.mode === 5;
   $('zeroBanner').hidden = !(on && !tel.z);
 
   // controls

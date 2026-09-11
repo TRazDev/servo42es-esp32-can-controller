@@ -34,6 +34,9 @@ void parse(const twai_message_t &msg) {
   if (msg.identifier != MOTOR_ID) return;
   const uint8_t *d = msg.data;
   const uint8_t len = msg.data_length_code;
+  // "82 xx" answers both "read mode" and "set mode". While a mode write is pending,
+  // 00/01 is its status, not a mode.
+  const bool modeWriteReply = d[0] == 0x82 && len == 3 && d[1] <= 1 && control::expectingModeWriteReply();
 
   portENTER_CRITICAL(&mux);
   state.rxFrames++;
@@ -54,7 +57,7 @@ void parse(const twai_message_t &msg) {
     case 0x3E: if (len == 3) state.stalled = d[1] == 1; break;
     case 0x37: if (len == 3) state.alarm = d[1]; break;
     case 0x3B: if (len == 3) state.homed = d[1] == 1; break;
-    case 0x82: if (len == 3) state.mode = d[1]; break;  // reply to "00 82" (read mode)
+    case 0x82: if (len == 3 && !modeWriteReply) state.mode = d[1]; break;  // reply to "00 82" (read mode)
     case 0x40:
       if (len == 6) {
         state.hardware = d[1] & 0x0F;
@@ -68,8 +71,11 @@ void parse(const twai_message_t &msg) {
 
   switch (d[0]) {  // replies to control and settings commands
     case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7: case 0x92: case 0x3D:
-    case 0x83: case 0x88: case 0x89: case 0x60:
+    case 0x83: case 0x88: case 0x89: case 0x60: case 0x41: case 0x3F:
       control::onReply(msg);
+      break;
+    case 0x82:
+      if (modeWriteReply) control::onReply(msg);
       break;
   }
 }

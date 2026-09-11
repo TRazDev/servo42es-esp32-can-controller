@@ -23,6 +23,14 @@ int8_t jogDir = 0;
 uint16_t jogRpm = 0;
 uint32_t lastJogMs = 0;
 
+// ---- maintenance (Advanced tab) ----
+uint32_t restartExpectedUntil = 0;  // restart / factory reset / calibration requested by the user
+bool fixModePending = false, fixSavePending = false;
+uint32_t fixDeadline = 0;
+uint32_t calStartedMs = 0;
+bool calSawOffline = false;
+constexpr uint32_t CAL_TIMEOUT_MS = 180000;
+
 // ---- diagnostics: report motor restarts, stalls and alarms ----
 bool everOnline = false;
 uint32_t jumpExpectedUntil = 0;  // set zero (and reconnects) legitimately reset the position counter
@@ -303,6 +311,42 @@ void execute(const Command &c) {
     case Cmd::SaveSettings:
       saveSettings(c);
       break;
+
+    // ---- Advanced tab ----
+    case Cmd::RestartMotor:
+    case Cmd::FactoryReset:
+      if (moving()) { event("REFUSED / STOP THE MOTOR FIRST", "err"); break; }
+      if (!servo::snapshot().online) { event("REFUSED / MOTOR NOT RESPONDING", "err"); break; }
+      can_bus::send(MOTOR_ID, c.type == Cmd::RestartMotor ? 0x41 : 0x3F);
+      restartExpectedUntil = millis() + 8000;
+      event(c.type == Cmd::RestartMotor ? "RESTART SENT / THE MOTOR REBOOTS, ZERO WILL BE LOST"
+                                        : "FACTORY RESET SENT / THE MOTOR RESTARTS WITH DEFAULTS", "warn");
+      break;
+    case Cmd::Calibrate: {
+      if ((why = moving() ? "REFUSED / STOP THE MOTOR FIRST" : nullptr) ||
+          (why = st.estop ? "REFUSED / RELEASE E-STOP FIRST" : nullptr) ||
+          (why = !servo::snapshot().online ? "REFUSED / MOTOR NOT RESPONDING" : nullptr)) {
+        event(why, "err");
+        break;
+      }
+      const uint8_t start = 0x01;
+      can_bus::send(MOTOR_ID, 0x80, &start, 1);  // no reply; the motor restarts into calibration
+      restartExpectedUntil = millis() + CAL_TIMEOUT_MS;
+      calStartedMs = millis();
+      calSawOffline = false;
+      forgetMotion();
+      setStatus([](Status &s) { s.calibrating = true; });
+      event("CALIBRATION STARTED / WATCH THE MOTOR LED, THEN POWER-CYCLE THE MOTOR", "warn");
+      break;
+    }
+    case Cmd::FixMode: {
+      if (moving()) { event("REFUSED / STOP THE MOTOR FIRST", "err"); break; }
+      const uint8_t mode = 0x05;
+      can_bus::send(MOTOR_ID, 0x82, &mode, 1);
+      fixModePending = true;
+      fixDeadline = millis() + 1000;
+      break;
+    }
   }
 }
 
@@ -329,9 +373,15 @@ void update() {
 
   const uint32_t now = millis();
 
+  const bool restartExpected = (int32_t)(restartExpectedUntil - now) > 0;
+
   // Diagnostics: tell the browser about changes the motor doesn't report on its own.
   if (havePrevState) {
-    if (prevState.online && !s.online) event("MOTOR STOPPED RESPONDING ON CAN", "err");
+    if (prevState.online && !s.online) {
+      if (st.calibrating) calSawOffline = true;
+      event(restartExpected ? "MOTOR OFFLINE (EXPECTED)" : "MOTOR STOPPED RESPONDING ON CAN",
+            restartExpected ? "warn" : "err");
+    }
     if (s.online && s.stalled && !prevState.stalled) {
       event("STALL DETECTED / THE MOTOR RELEASED THE SHAFT", "err");
       jogDir = 0;  // a stall keeps the position counter, so the zero stays valid
@@ -339,13 +389,23 @@ void update() {
     }
     if (s.online && s.alarm != prevState.alarm && alarmText(s.alarm)) event(alarmText(s.alarm), "err");
     if (s.positionJumps != prevState.positionJumps && (int32_t)(now - jumpExpectedUntil) > 0) {
-      event("MOTOR RESTARTED (POSITION COUNTER RESET) / ZERO IS LOST", "err");
+      event(restartExpected ? "MOTOR RESTARTED / ZERO IS LOST"
+                            : "MOTOR RESTARTED (POSITION COUNTER RESET) / ZERO IS LOST",
+            restartExpected ? "warn" : "err");
       forgetMotion();
       sendHeartbeat();
     }
   }
   prevState = s;
   havePrevState = true;
+
+  if (st.calibrating && now - calStartedMs > CAL_TIMEOUT_MS) {
+    setStatus([](Status &x) { x.calibrating = false; });
+  }
+  if ((fixModePending || fixSavePending) && (int32_t)(now - fixDeadline) > 0) {
+    fixModePending = fixSavePending = false;
+    event("NO REPLY FROM THE MOTOR TO THE MODE CHANGE", "err");
+  }
   if (readPending && (int32_t)(now - readDeadline) > 0) finishRead();  // unanswered = unknown
   if ((writePending || savePending) && (int32_t)(now - writeDeadline) > 0) {
     writePending = 0;
@@ -432,19 +492,49 @@ void onReply(const twai_message_t &msg) {
       }
       break;
     case 0x60:
+      if (fixSavePending) {
+        fixSavePending = false;
+        if (s == 1) event("MODE SET TO BUS CLOSED-LOOP FOC AND SAVED", "ok");
+        else event("MODE CHANGED BUT THE MOTOR COULD NOT SAVE IT", "err");
+        break;
+      }
       if (!savePending) break;
       savePending = false;
       if (s == 1) event("SETTINGS SAVED (ESP32 + MOTOR)", "ok");
       else event("MOTOR COULD NOT SAVE ITS SETTINGS", "err");
       startRead();  // show what the motor now reports
       break;
+    case 0x82:  // routed here only when it answers our mode write (see servo.cpp)
+      fixModePending = false;
+      if (s == 1) {
+        const uint8_t save = 0x01;
+        can_bus::send(MOTOR_ID, 0x60, &save, 1);
+        fixSavePending = true;
+        fixDeadline = millis() + 1000;
+      } else {
+        event("MOTOR REFUSED THE MODE CHANGE", "err");
+      }
+      break;
+    case 0x41:
+      if (s != 1) event("MOTOR REFUSED THE RESTART", "err");
+      break;
+    case 0x3F:
+      if (s != 1) event("MOTOR REFUSED THE FACTORY RESET", "err");
+      break;
   }
   if (readPending == 0 && (d[0] == 0x83 || d[0] == 0x88 || d[0] == 0x89) && len > 3) finishRead();
 }
 
+bool expectingModeWriteReply() { return fixModePending; }
+
 void onMotorOnline() {
   // A motor that was offline has probably been power-cycled: its position restarts near 0.
-  if (everOnline) event("MOTOR BACK ONLINE / IT PROBABLY RESTARTED, ZERO IS LOST", "warn");
+  if (st.calibrating && calSawOffline) {
+    setStatus([](Status &s) { s.calibrating = false; });
+    event("MOTOR BACK ONLINE AFTER CALIBRATION / CHECK THAT IT MOVES SMOOTHLY", "ok");
+  } else if (everOnline) {
+    event("MOTOR BACK ONLINE / IT PROBABLY RESTARTED, ZERO IS LOST", "warn");
+  }
   everOnline = true;
   forgetMotion();
   jumpExpectedUntil = millis() + 2000;  // the first position sample after reconnecting may jump

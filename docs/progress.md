@@ -46,7 +46,7 @@ Newest first. The top entry should always describe the current state.
   - Added boot logging of the ESP32 settings. NVS works: keys are stored and loaded. A gear of 1.0 after a reboot means 1.0 was the last value saved (the user confirmed they had set it back to 1).
 - **Left to do:**
   1. README is out of date (it still says the firmware is coming): update the status and features, and add build/flash steps (secrets.h, build_ui.py, board settings).
-  2. Advanced tab actions, still disabled: restart motor (41H), encoder calibration (80H), factory reset (3FH), "fix mode" (82 05 + 60H).
+  2. Advanced tab actions: **built and uploaded, testing pending.** Restart motor (41H), factory reset (3FH), encoder calibration (80H, calibration banner until the motor is power-cycled), fix mode (82 05 + 60H, also on the wrong-mode banner). A mode-write reply "82 00/01" is told apart from a mode read by a pending flag (control::expectingModeWriteReply). Expected restarts are reported as warnings, not errors.
   3. Homing + limit switches (2c-2): waiting until the user has a switch.
   4. Hardware checks: position settling after "done" (98H threshold); speed accuracy (commanded vs 32H readback). Stall detection: done.
   5. Optional: firmware updates over WiFi (OTA), useful once the ESP32 is built into the arm.

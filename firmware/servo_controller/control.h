@@ -8,7 +8,8 @@ namespace control {
 
 enum class Cmd : uint8_t {
   Enable, Disable, Stop, EStop, Release, Jog, Step, Goto, Zero, ClearStall, ClientGone,
-  GetSettings, SaveSettings
+  GetSettings, SaveSettings,
+  RestartMotor, FactoryReset, Calibrate, FixMode
 };
 
 struct Command {
@@ -32,6 +33,7 @@ struct Status {
   bool jogging = false;
   bool hasTarget = false;
   float targetDeg = 0;
+  bool calibrating = false;  // 80H sent; cleared when the motor is power-cycled or after a timeout
 };
 
 void begin();
@@ -42,5 +44,8 @@ Status status();                   // safe from any task
 // Called by servo.cpp from the main loop.
 void onReply(const twai_message_t &msg);
 void onMotorOnline();
+// True while a mode write (82 05) is waiting for its "82 <status>" reply, which has the
+// same shape as the reply to reading the mode ("00 82" -> "82 <mode>").
+bool expectingModeWriteReply();
 
 }  // namespace control

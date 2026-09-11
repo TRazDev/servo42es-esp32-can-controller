@@ -27,11 +27,11 @@ size_t telemetryJson(char *buf, size_t size) {
   if (c.hasTarget) snprintf(target, sizeof(target), "%.3f", c.targetDeg);
   const int n = snprintf(buf, size,
       "{\"on\":%d,\"en\":%d,\"mode\":%d,\"run\":%u,\"alm\":%u,\"stall\":%d,\"homed\":%d,"
-      "\"z\":%d,\"es\":%d,\"jog\":%d,\"tgt\":%s,"
+      "\"z\":%d,\"es\":%d,\"jog\":%d,\"tgt\":%s,\"cal\":%d,"
       "\"cnt\":%lld,\"pos\":%.3f,\"spd\":%.2f,\"err\":%.4f,\"gear\":%.4f,\"inv\":%d,\"maxrpm\":%u,"
       "\"fw\":\"%s\",\"hw\":%u,\"id\":%u,\"rssi\":%d,\"rx\":%lu,\"up\":%lu}",
       s.online, s.enabled, s.mode, s.runStatus, s.alarm, s.stalled, s.homed,
-      c.zeroed, c.estop, c.jogging, target,
+      c.zeroed, c.estop, c.jogging, target, c.calibrating,
       (long long)s.positionCounts,
       units::countsToDeg(s.positionCounts, j),
       units::rpmToDegPerS(s.speedRpm, j),
@@ -77,6 +77,10 @@ void handleCommand(const char *json) {
   else if (!strcmp(name, "zero")) cmd.type = Cmd::Zero;
   else if (!strcmp(name, "clearstall")) cmd.type = Cmd::ClearStall;
   else if (!strcmp(name, "getsettings")) cmd.type = Cmd::GetSettings;
+  else if (!strcmp(name, "restart")) cmd.type = Cmd::RestartMotor;
+  else if (!strcmp(name, "factoryreset")) cmd.type = Cmd::FactoryReset;
+  else if (!strcmp(name, "calibrate")) cmd.type = Cmd::Calibrate;
+  else if (!strcmp(name, "fixmode")) cmd.type = Cmd::FixMode;
   else if (!strcmp(name, "savesettings")) {
     cmd.type = Cmd::SaveSettings;
     cmd.gear = jsonNumber(json, "gear", NAN);
