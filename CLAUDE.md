@@ -24,6 +24,7 @@ See docs/progress.md (top entry = latest state and next steps).
 - docs/references/ — datasheets and manuals (local copies)
 
 Upstream docs: https://github.com/makerbase-motor/MKS-SERVO42ES-57ES (manual only, no code)
+This repo: https://github.com/TRazDev/servo42es-esp32-can-controller (private). Before making it public, remove or attribute the third-party files (the Makerbase manual PDF, design/support.js).
 
 ## Rules for working on this project
 - Read docs/progress.md at the start of a session.

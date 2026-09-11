@@ -12,7 +12,7 @@ Newest first. The top entry should always describe the current state.
   - Added the supply range (20–48 V), bus defaults and board notes (ESP32-S3 N16R8) to hardware.md.
   - Wrote the v1 spec, gear-ratio math and zeroing plan in gui.md, plus a design brief (design-brief.md).
   - The user designed the UI in Claude Design. I pulled it into design/ and reviewed it (gui.md → Design review).
-  - Started a git repo with a first commit.
+  - Started a git repo with a first commit. Added README.md with a UI screenshot (docs/images/ui.png). Created a private GitHub repo, TRazDev/servo42es-esp32-can-controller, and pushed.
 - **Decisions so far:**
   - D-002: 24 V supply
   - D-003: 6-DOF arm, mode 05
