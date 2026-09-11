@@ -1,0 +1,10 @@
+.DS_Store
+
+# Arduino / build output
+build/
+*.bin
+*.elf
+*.map
+
+# WiFi credentials and other secrets — never commit
+secrets.h

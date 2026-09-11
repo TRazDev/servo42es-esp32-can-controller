@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  html, body { margin:0; padding:0; background:#ffffff; }
+  * { box-sizing: border-box; }
+  a { color:#111110; text-decoration:underline; }
+  a:hover { color:#8a8780; }
+  input, button, select { font: inherit; }
+  input[type=number]::-webkit-inner-spin-button { opacity:0.3; }
+  @keyframes blink { 0%,55%{opacity:1} 56%,100%{opacity:0.25} }
+</style>
+</helmet>
+<div style="min-height:100vh; background:#ffffff; color:#111110; font-family:ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size:12px; letter-spacing:0.07em; padding:18px; display:flex; flex-direction:column; gap:16px;">
+
+  <!-- ===================== HEADER ===================== -->
+  <div style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:24px; border-bottom:1px solid #111110; padding-bottom:12px;">
+    <div style="display:flex; flex-direction:column; gap:3px; min-width:170px;">
+      <div style="font-size:17px; font-weight:700; letter-spacing:0.02em;">SERVO / J1</div>
+      <div style="font-size:10px; color:#8a8780;">MKS42ES &middot; CAN &middot; ESP32-S3</div>
+    </div>
+
+    <div style="display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap;">
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">WIFI</span>
+        <span style="font-size:12px; display:flex; align-items:center; gap:6px; color:{{ wifiColor }};"><span style="width:7px; height:7px; background:{{ wifiColor }}; display:inline-block;"></span>{{ wifiLabel }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">CAN</span>
+        <span style="font-size:12px; display:flex; align-items:center; gap:6px; color:{{ canColor }};"><span style="width:7px; height:7px; background:{{ canColor }}; display:inline-block;"></span>{{ canLabel }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">MOTOR</span>
+        <span style="font-size:12px; color:{{ enabledColor }};">{{ enabledLabel }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">MOTION</span>
+        <span style="font-size:12px;">{{ motionLabel }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">JOINT</span>
+        <div style="display:flex; gap:3px;">
+          <sc-for list="{{ joints }}" as="j" hint-placeholder-count="6">
+            <button onClick="{{ j.onPick }}" style="width:22px; height:22px; border:1px solid {{ j.border }}; background:{{ j.bg }}; color:{{ j.fg }}; cursor:pointer; font-size:10px; padding:0;">{{ j.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+      <sc-if value="{{ hasFault }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #c8371c; color:#c8371c; padding:5px 9px; font-size:11px; animation:blink 1.2s steps(1,end) infinite;">! {{ faultLabel }}</div>
+      </sc-if>
+      <button onClick="{{ onEstop }}" style="border:1px solid #c8371c; background:{{ estopBg }}; color:{{ estopFg }}; font-size:13px; font-weight:700; letter-spacing:0.16em; padding:14px 26px; cursor:pointer; min-width:150px;" style-hover="{{ redHover }}">{{ estopLabel }}</button>
+    </div>
+  </div>
+
+  <!-- ===================== NAV ===================== -->
+  <div style="display:flex; gap:30px; flex-wrap:wrap; border-bottom:1px solid #dcdad4;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <button onClick="{{ t.onPick }}" style="border:none; border-bottom:2px solid {{ t.line }}; background:transparent; color:{{ t.fg }}; padding:0 0 9px 0; margin-bottom:-1px; font-size:12px; letter-spacing:0.16em; cursor:pointer;">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <!-- ===================== CONTROL ===================== -->
+  <sc-if value="{{ isControl }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+
+      <sc-if value="{{ showZeroWarn }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #c07a14; background:#fdf6e8; color:#8a5c05; padding:9px 12px; font-size:11px; display:flex; gap:12px; flex-wrap:wrap;">
+          <span style="font-weight:700;">NOT ZEROED</span>
+          <span>ABSOLUTE MOVES ARE MEANINGLESS UNTIL ZERO IS SET OR HOMING RUNS.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ stalled }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #c8371c; background:#fdefec; padding:10px 12px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:13px; font-weight:700; color:#c8371c;">STALL DETECTED</span>
+          <span style="font-size:11px; color:#6d6a64;">MOTION HALTED &middot; SHAFT DEVIATION EXCEEDED TOLERANCE</span>
+          <button onClick="{{ onClearStall }}" style="margin-left:auto; border:1px solid #c8371c; background:#c8371c; color:#ffffff; padding:7px 13px; font-size:11px; font-weight:700; cursor:pointer;">CLEAR STALL</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #c8371c; background:#fdefec; color:#c8371c; padding:9px 12px; font-size:11px; display:flex; gap:12px; flex-wrap:wrap;">
+          <span style="font-weight:700;">LINK DOWN</span>
+          <span style="color:#6d6a64;">READOUTS ARE STALE &middot; ALL CONTROLS LOCKED UNTIL LINK RETURNS</span>
+        </div>
+      </sc-if>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px;">
+        <!-- READOUTS -->
+        <div style="display:flex; flex-direction:column; gap:14px; opacity:{{ staleOpacity }};">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">READOUT</div>
+          <div>
+            <div style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">JOINT ANGLE / DEG</div>
+            <div style="font-size:52px; line-height:1.05; font-weight:700; letter-spacing:-0.01em;">{{ angleStr }}</div>
+          </div>
+          <div style="display:flex; gap:18px;">
+            <div style="flex:1;">
+              <div style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">SPEED / DEG&middot;S</div>
+              <div style="font-size:26px; font-weight:700; border-top:1px solid #dcdad4; padding-top:4px; margin-top:4px;">{{ speedStr }}</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">POS ERROR / DEG</div>
+              <div style="font-size:26px; font-weight:700; border-top:1px solid #dcdad4; padding-top:4px; margin-top:4px; color:{{ errColor }};">{{ errStr }}</div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:9px; letter-spacing:0.18em; color:#a8a5a0;">
+              <span>TARGET</span><span style="color:#111110;">{{ targetStr }}</span>
+            </div>
+            <div style="height:6px; background:#e2e0da; margin-top:6px;">
+              <div style="height:100%; background:#111110; width:{{ progressPct }};"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHART -->
+        <div style="grid-column:span 2; min-width:0; display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; display:flex; justify-content:space-between; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">
+            <span>TRACE / LAST 10 S</span><span>{{ traceStamp }}</span>
+          </div>
+          <canvas ref="{{ chartRef }}" width="1160" height="240" style="width:100%; height:auto; display:block; background:#ffffff; border:1px solid #dcdad4;"></canvas>
+          <div style="display:flex; gap:20px; font-size:9px; letter-spacing:0.16em; color:#a8a5a0; flex-wrap:wrap;">
+            <span style="display:flex; align-items:center; gap:6px;"><span style="width:16px; height:2px; background:#111110; display:inline-block;"></span>ANGLE</span>
+            <span style="display:flex; align-items:center; gap:6px;"><span style="width:16px; height:2px; background:#c07a14; display:inline-block;"></span>POS ERROR &times;20</span>
+            <span style="margin-left:auto;">WS 20 HZ</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px;">
+        <!-- DRIVE -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">DRIVE</div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ onEnable }}" style="flex:1; border:1px solid {{ enableBorder }}; background:{{ enableBg }}; color:{{ enableFg }}; padding:12px; font-size:12px; font-weight:700; cursor:pointer;">ENABLE</button>
+            <button onClick="{{ onDisable }}" style="flex:1; border:1px solid #111110; background:{{ disableBg }}; color:{{ disableFg }}; padding:12px; font-size:12px; font-weight:700; cursor:pointer;">DISABLE</button>
+            <button onClick="{{ onStop }}" style="flex:1; border:1px solid #c07a14; background:transparent; color:#c07a14; padding:12px; font-size:12px; font-weight:700; cursor:pointer; opacity:{{ motionOpacity }};" style-hover="{{ orangeHover }}">STOP</button>
+          </div>
+          <div style="font-size:10px; color:#a8a5a0;">DISABLE RELEASES THE SHAFT &middot; FREE ROTATION</div>
+
+          <div style="display:flex; flex-direction:column; gap:9px; opacity:{{ motionOpacity }}; border-top:1px solid #e6e4df; padding-top:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.16em;">
+              <span>JOG / HOLD TO MOVE</span><span style="color:#a8a5a0;">{{ jogSpeedStr }} DEG&middot;S</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button onMouseDown="{{ onJogMinus }}" onMouseUp="{{ onJogEnd }}" onMouseLeave="{{ onJogEnd }}" onTouchStart="{{ onJogMinus }}" onTouchEnd="{{ onJogEnd }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:16px; font-size:16px; cursor:pointer; touch-action:none;" style-active="{{ invActive }}">&#9664;&#9664;</button>
+              <button onMouseDown="{{ onJogPlus }}" onMouseUp="{{ onJogEnd }}" onMouseLeave="{{ onJogEnd }}" onTouchStart="{{ onJogPlus }}" onTouchEnd="{{ onJogEnd }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:16px; font-size:16px; cursor:pointer; touch-action:none;" style-active="{{ invActive }}">&#9654;&#9654;</button>
+            </div>
+            <input type="range" min="1" max="120" value="{{ jogSpeed }}" onChange="{{ onJogSpeedChange }}" style="width:100%; accent-color:#111110;" />
+
+            <div style="display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.16em; margin-top:6px;">
+              <span>STEP</span><span style="color:#a8a5a0;">{{ stepStr }} DEG</span>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+                <button onClick="{{ s.onPick }}" style="flex:1; min-width:54px; border:1px solid {{ s.border }}; background:{{ s.bg }}; color:{{ s.fg }}; padding:8px 4px; font-size:11px; cursor:pointer;">{{ s.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button onClick="{{ onStepMinus }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">&minus; STEP</button>
+              <button onClick="{{ onStepPlus }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">STEP +</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABSOLUTE MOVE -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">ABSOLUTE MOVE</div>
+          <div style="display:flex; flex-direction:column; gap:11px; opacity:{{ motionOpacity }};">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">TARGET ANGLE / DEG</span>
+              <input type="number" step="0.1" value="{{ gotoAngle }}" onChange="{{ onGotoAngle }}" style="border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:6px 0; font-size:28px; font-weight:700; width:100%;" />
+            </div>
+            <div style="display:flex; gap:14px;">
+              <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">SPEED / DEG&middot;S</span>
+                <input type="number" value="{{ gotoSpeed }}" onChange="{{ onGotoSpeed }}" style="border:none; border-bottom:1px solid #dcdad4; background:transparent; color:#111110; padding:5px 0; font-size:15px; width:100%;" />
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">ACCEL / DEG&middot;S2</span>
+                <input type="number" value="{{ gotoAccel }}" onChange="{{ onGotoAccel }}" style="border:none; border-bottom:1px solid #dcdad4; background:transparent; color:#111110; padding:5px 0; font-size:15px; width:100%;" />
+              </div>
+            </div>
+            <button onClick="{{ onGo }}" style="border:1px solid #111110; background:#111110; color:#ffffff; padding:13px; font-size:12px; font-weight:700; letter-spacing:0.2em; cursor:pointer;" style-hover="{{ goHover }}">GO &#9654;</button>
+            <div style="display:flex; gap:8px;">
+              <button onClick="{{ onGoZero }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">GO TO ZERO</button>
+              <button onClick="{{ onSetZero }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">SET ZERO</button>
+            </div>
+            <button onClick="{{ onHome }}" style="border:1px dashed #cfccc5; background:transparent; color:#b4b1aa; padding:11px; font-size:11px; cursor:not-allowed;">HOME &mdash; NOT CONFIGURED</button>
+          </div>
+        </div>
+
+        <!-- STATE -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">REFERENCE &amp; I/O</div>
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #e6e4df; font-size:11px;">
+              <span style="color:#6d6a64;">ZERO</span><span style="color:{{ zeroColor }};">{{ zeroLabel }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #e6e4df; font-size:11px;">
+              <span style="color:#6d6a64;">HOMED</span><span style="color:{{ homedColor }};">{{ homedLabel }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #e6e4df; font-size:11px;">
+              <span style="color:#6d6a64;">LIMIT &middot; HOME/LEFT</span><span style="color:{{ swLColor }};">{{ swLLabel }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #e6e4df; font-size:11px;">
+              <span style="color:#6d6a64;">LIMIT &middot; RIGHT</span><span style="color:{{ swRColor }};">{{ swRLabel }}</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <span style="font-size:9px; color:#a8a5a0; letter-spacing:0.18em;">ALARM REGISTER</span>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+              <sc-for list="{{ alarms }}" as="a" hint-placeholder-count="6">
+                <span style="border:1px solid {{ a.color }}; color:{{ a.color }}; padding:3px 6px; font-size:10px;">{{ a.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; border-bottom:1px solid #dcdad4; padding-bottom:12px;">
+        <span style="font-size:12px; font-weight:700; color:{{ dirtyColor }};">{{ dirtyLabel }}</span>
+        <span style="font-size:10px; color:#a8a5a0;">EDITS ARE LOCAL UNTIL WRITTEN TO THE MOTOR</span>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <button onClick="{{ onReload }}" style="border:1px solid #111110; background:transparent; color:#111110; padding:9px 14px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">RELOAD FROM MOTOR</button>
+          <button onClick="{{ onSave }}" style="border:1px solid #111110; background:{{ saveBg }}; color:{{ saveFg }}; padding:9px 14px; font-size:11px; font-weight:700; cursor:pointer;">SAVE TO MOTOR</button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:26px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">JOINT</div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">GEAR RATIO R</span>
+            <input type="number" value="{{ s_gear }}" onChange="{{ onGear }}" style="width:104px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">INVERT DIRECTION</span>
+            <button onClick="{{ onInvert }}" style="width:104px; border:1px solid {{ invertBorder }}; background:{{ invertBg }}; color:{{ invertFg }}; padding:6px; font-size:11px; cursor:pointer;">{{ invertLabel }}</button>
+          </div>
+          <div style="font-size:10px; color:#a8a5a0;">1 JOINT TURN = {{ s_gear }} MOTOR TURNS</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">MOTOR</div>
+          <div style="display:flex; flex-direction:column; gap:5px; padding:6px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#6d6a64;">
+              <span>RUN CURRENT / MA</span><span style="color:#111110; font-weight:700;">{{ s_current }}</span>
+            </div>
+            <input type="range" min="0" max="3000" step="50" value="{{ s_current }}" onChange="{{ onCurrent }}" style="width:100%; accent-color:#111110;" />
+            <div style="display:flex; justify-content:space-between; font-size:9px; color:#b4b1aa;"><span>0</span><span>DEFAULT 1600</span><span>3000</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">STALL PROTECTION</span>
+            <button onClick="{{ onStallProt }}" style="width:104px; border:1px solid {{ stallProtBorder }}; background:{{ stallProtBg }}; color:{{ stallProtFg }}; padding:6px; font-size:11px; cursor:pointer;">{{ stallProtLabel }}</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">STALL TOLERANCE / DEG</span>
+            <input type="number" step="0.1" value="{{ s_stallTol }}" onChange="{{ onStallTol }}" style="width:104px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">LINK-LOSS TIMEOUT / MS</span>
+            <input type="number" step="50" value="{{ s_timeout }}" onChange="{{ onTimeout }}" style="width:104px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="font-size:10px; color:#a8a5a0;">0 = DISABLED &middot; MOTOR STOPS AFTER SILENCE</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">HOMING</div>
+          <span style="font-size:10px; color:#a8a5a0;">METHOD</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <sc-for list="{{ homingMethods }}" as="m" hint-placeholder-count="4">
+              <button onClick="{{ m.onPick }}" style="border:1px solid {{ m.border }}; background:{{ m.bg }}; color:{{ m.fg }}; padding:8px 4px; font-size:10px; cursor:pointer;">{{ m.label }}</button>
+            </sc-for>
+          </div>
+          <span style="font-size:10px; color:#a8a5a0; margin-top:4px;">DIRECTION</span>
+          <div style="display:flex; gap:6px;">
+            <sc-for list="{{ homingDirs }}" as="d" hint-placeholder-count="3">
+              <button onClick="{{ d.onPick }}" style="flex:1; border:1px solid {{ d.border }}; background:{{ d.bg }}; color:{{ d.fg }}; padding:8px 4px; font-size:10px; cursor:pointer;">{{ d.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">FAST SPEED / DEG&middot;S</span>
+            <input type="number" value="{{ s_fast }}" onChange="{{ onFast }}" style="width:92px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">SLOW SPEED / DEG&middot;S</span>
+            <input type="number" value="{{ s_slow }}" onChange="{{ onSlow }}" style="width:92px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">HOMING CURRENT / MA</span>
+            <input type="number" step="50" value="{{ s_homeCurrent }}" onChange="{{ onHomeCurrent }}" style="width:92px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">OFFSET AFTER HOMING / DEG</span>
+            <input type="number" step="0.1" value="{{ s_offset }}" onChange="{{ onOffset }}" style="width:92px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">TIMEOUT / MS</span>
+            <input type="number" step="500" value="{{ s_homeTimeout }}" onChange="{{ onHomeTimeout }}" style="width:92px; border:none; border-bottom:1px solid #111110; background:transparent; color:#111110; padding:5px 0; font-size:14px; text-align:right;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">HOME AT POWER-UP</span>
+            <button onClick="{{ onAutoHome }}" style="width:92px; border:1px solid {{ autoHomeBorder }}; background:{{ autoHomeBg }}; color:{{ autoHomeFg }}; padding:6px; font-size:11px; cursor:pointer;">{{ autoHomeLabel }}</button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">LIMIT SWITCHES</div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">ENABLE</span>
+            <button onClick="{{ onSwEnable }}" style="width:104px; border:1px solid {{ swEnBorder }}; background:{{ swEnBg }}; color:{{ swEnFg }}; padding:6px; font-size:11px; cursor:pointer;">{{ swEnLabel }}</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">ACTIVE LEVEL / CLOSED =</span>
+            <div style="display:flex; gap:6px;">
+              <sc-for list="{{ swLevels }}" as="l" hint-placeholder-count="2">
+                <button onClick="{{ l.onPick }}" style="width:50px; border:1px solid {{ l.border }}; background:{{ l.bg }}; color:{{ l.fg }}; padding:6px 0; font-size:11px; cursor:pointer;">{{ l.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #e6e4df; padding:6px 0;">
+            <span style="flex:1; font-size:11px; color:#6d6a64;">SECOND / RIGHT SWITCH</span>
+            <button onClick="{{ onSwRight }}" style="width:104px; border:1px solid {{ swRightBorder }}; background:{{ swRightBg }}; color:{{ swRightFg }}; padding:6px; font-size:11px; cursor:pointer;">{{ swRightLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== ADVANCED ===================== -->
+  <sc-if value="{{ isAdvanced }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <sc-if value="{{ wrongMode }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #c8371c; background:#fdefec; padding:12px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:13px; font-weight:700; color:#c8371c;">WRONG CONTROL MODE</span>
+          <span style="font-size:11px; color:#6d6a64;">MOTOR REPORTS {{ modeLabel }} &middot; REQUIRED: BUS CLOSED-LOOP FOC &middot; MOTION BLOCKED</span>
+          <button onClick="{{ onFixMode }}" style="margin-left:auto; border:1px solid #c8371c; background:#c8371c; color:#ffffff; padding:8px 14px; font-size:11px; font-weight:700; cursor:pointer;">FIX NOW</button>
+        </div>
+      </sc-if>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:26px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">CONTROL MODE</div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;">
+            <span style="color:#6d6a64;">REPORTED</span><span style="color:{{ modeColor }};">{{ modeLabel }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;">
+            <span style="color:#6d6a64;">REQUIRED</span><span>BUS CLOSED-LOOP FOC</span>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #c07a14; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#c07a14;">ENCODER CALIBRATION</div>
+          <div style="font-size:11px; color:#8a5c05; line-height:1.7;">MOTOR MUST CARRY NO LOAD. IT WILL SPIN 20+ TURNS AT 600 RPM, THEN RESTART. RUN THIS BEFORE MOUNTING INTO THE ARM.</div>
+          <div style="font-size:10px; color:#a8a5a0;">RESULT REPORTS BACK ~10 S AFTER RESTART</div>
+          <button onClick="{{ onCalibrate }}" style="border:1px solid #c07a14; background:transparent; color:#c07a14; padding:11px; font-size:11px; font-weight:700; cursor:pointer;" style-hover="{{ orangeHover }}">RUN CALIBRATION</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">MAINTENANCE</div>
+          <button onClick="{{ onRestart }}" style="border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">RESTART MOTOR</button>
+          <button onClick="{{ onFactory }}" style="border:1px solid #c8371c; background:transparent; color:#c8371c; padding:11px; font-size:11px; font-weight:700; cursor:pointer;" style-hover="{{ redHover }}">FACTORY RESET</button>
+          <div style="font-size:10px; color:#a8a5a0;">FACTORY RESET DISCARDS ALL STORED SETTINGS AND RESTARTS THE MOTOR</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="border-bottom:1px solid #dcdad4; padding-bottom:4px; font-size:9px; letter-spacing:0.2em; color:#a8a5a0;">DEVICE</div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;"><span style="color:#6d6a64;">FIRMWARE</span><span>{{ fw }}</span></div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;"><span style="color:#6d6a64;">HARDWARE</span><span>{{ hw }}</span></div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;"><span style="color:#6d6a64;">MOTOR ID</span><span>0x01</span></div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e6e4df; padding:8px 0; font-size:11px;"><span style="color:#6d6a64;">CAN BITRATE</span><span>500 KBIT/S</span></div>
+          <div style="font-size:10px; color:#b4b1aa;">CAN BUS SETTINGS EDITABLE IN A LATER REVISION</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== ARM (FUTURE) ===================== -->
+  <sc-if value="{{ isArm }}" hint-placeholder-val="{{ false }}">
+    <div style="border:1px dashed #cfccc5; padding:48px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+      <div style="font-size:13px; letter-spacing:0.2em; color:#8a8780;">ARM OVERVIEW / RESERVED</div>
+      <div style="font-size:11px; color:#a8a5a0; text-align:center; max-width:460px; line-height:1.8;">SIX-JOINT COORDINATED MOTION, TRAJECTORIES AND KINEMATICS LAND HERE. OUT OF SCOPE FOR V1.</div>
+      <div style="display:flex; gap:8px;">
+        <sc-for list="{{ joints }}" as="j" hint-placeholder-count="6">
+          <div style="width:54px; height:54px; border:1px solid #dcdad4; color:#b4b1aa; display:flex; align-items:center; justify-content:center; font-size:12px;">{{ j.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== FOOTER ===================== -->
+  <div style="margin-top:auto; border-top:1px solid #dcdad4; padding-top:8px; display:flex; gap:20px; font-size:9px; letter-spacing:0.16em; color:#b4b1aa; flex-wrap:wrap;">
+    <span>WS {{ wsLabel }}</span>
+    <span>RX {{ rxCount }} FRAMES</span>
+    <span>GEAR 1:{{ s_gear }}</span>
+    <span style="margin-left:auto;">ESP32-S3 &middot; 192.168.4.1</span>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; left:18px; bottom:18px; z-index:100; border:1px solid {{ toastColor }}; background:#ffffff; color:{{ toastColor }}; padding:10px 14px; font-size:11px; max-width:400px;">{{ toastText }}</div>
+  </sc-if>
+
+  <!-- ===================== CONFIRM DIALOG ===================== -->
+  <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:110; background:rgba(255,255,255,0.88); display:flex; align-items:center; justify-content:center; padding:20px;">
+      <div style="border:1px solid {{ confirmColor }}; background:#ffffff; max-width:470px; width:100%; box-shadow:0 18px 40px rgba(17,17,16,0.12);">
+        <div style="border-bottom:1px solid {{ confirmColor }}; color:{{ confirmColor }}; padding:9px 14px; font-size:10px; letter-spacing:0.2em;">{{ confirmTitle }}</div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:16px;">
+          <div style="font-size:12px; line-height:1.8; color:#3d3b36;">{{ confirmBody }}</div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ onCancel }}" style="flex:1; border:1px solid #111110; background:transparent; color:#111110; padding:11px; font-size:11px; cursor:pointer;" style-hover="{{ invHover }}">CANCEL</button>
+            <button onClick="{{ onConfirm }}" style="flex:1; border:1px solid {{ confirmColor }}; background:{{ confirmColor }}; color:#ffffff; padding:11px; font-size:11px; font-weight:700; cursor:pointer;">{{ confirmLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;connection&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;LIVE&quot;,&quot;RECONNECTING&quot;,&quot;LOST&quot;,&quot;NO CAN RESPONSE&quot;],&quot;default&quot;:&quot;LIVE&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Simulated state&quot;},&quot;fault&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;NONE&quot;,&quot;STALL&quot;,&quot;OVERCURRENT&quot;,&quot;PHASE LOSS&quot;,&quot;OVERVOLTAGE&quot;,&quot;UNDERVOLTAGE&quot;,&quot;POSITION ERROR&quot;,&quot;ENCODER ERROR&quot;],&quot;default&quot;:&quot;NONE&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Simulated state&quot;},&quot;wrongControlMode&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulated state&quot;},&quot;grid&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Look&quot;}}">
+const INK = '#111110', PAPER = '#ffffff', LINE = '#dcdad4', MUTED = '#a8a5a0';
+const RED = '#c8371c', ORG = '#c07a14', GRN = '#1f7a45';
+const DEFAULTS = { gear: 50, invert: false, current: 1600, stallProt: true, stallTol: 1.5, timeout: 500,
+  method: 'LIMIT SWITCH', dir: 'REVERSE', fast: 30, slow: 5, homeCurrent: 800, offset: 0, homeTimeout: 15000,
+  autoHome: false, swEnable: true, swLevel: 'LOW', swRight: false };
+
+class Component extends DCLogic {
+  chartRef = React.createRef();
+  state = {
+    screen: 'control', angle: 0, speed: 0, err: 0, target: null, moveStart: 0,
+    enabled: false, motion: 'STOPPED', zeroed: false, homed: false, stallCleared: false,
+    estop: false, jogDir: 0, jogSpeed: 20, step: 1,
+    gotoAngle: '90.00', gotoSpeed: 30, gotoAccel: 60,
+    hist: [], rx: 0, modeFixed: false,
+    settings: Object.assign({}, DEFAULTS), dirty: false,
+    toast: null, toastColor: INK, confirm: null, t: 0
+  };
+
+  componentDidMount() { this.timer = setInterval(() => this.tick(), 50); }
+  componentWillUnmount() { clearInterval(this.timer); if (this.toastT) clearTimeout(this.toastT); }
+
+  conn() { return (this.props.connection || 'LIVE').toUpperCase(); }
+  fault() { return (this.props.fault || 'NONE').toUpperCase(); }
+  offline() { const c = this.conn(); return c === 'LOST' || c === 'NO CAN RESPONSE'; }
+  stalled() { return this.fault() === 'STALL' && !this.state.stallCleared; }
+  wrongMode() { return !!this.props.wrongControlMode && !this.state.modeFixed; }
+  locked() { return this.offline() || this.state.estop || this.stalled() || this.wrongMode(); }
+  canMove() { return !this.locked() && this.state.enabled; }
+
+  toast(text, color) {
+    if (this.toastT) clearTimeout(this.toastT);
+    this.setState({ toast: text, toastColor: color || INK });
+    this.toastT = setTimeout(() => this.setState({ toast: null }), 2800);
+  }
+
+  tick() {
+    const s = this.state, dt = 0.05;
+    let { angle, speed, target, motion } = s;
+    const dead = !this.canMove();
+    if (dead) {
+      speed = 0; target = null;
+      motion = this.state.estop ? 'E-STOP' : this.stalled() ? 'STALLED' : this.offline() ? 'NO LINK' : 'STOPPED';
+    } else if (s.jogDir !== 0) {
+      speed = s.jogDir * s.jogSpeed; angle += speed * dt; motion = 'CRUISING'; target = null;
+    } else if (target != null) {
+      const d = target - angle, ad = Math.abs(d);
+      const a = Math.max(1, Number(s.gotoAccel) || 60), vmax = Math.max(1, Number(s.gotoSpeed) || 30);
+      const vStop = Math.sqrt(Math.max(0, 2 * a * ad));
+      const v = Math.min(vmax, Math.abs(speed) + a * dt, vStop);
+      if (ad < 0.03 || v * dt >= ad) {
+        angle = target; speed = 0; target = null; motion = 'STOPPED';
+        this.toast('MOVE COMPLETE / ' + angle.toFixed(2) + ' DEG', GRN);
+      } else {
+        speed = Math.sign(d) * v; angle += speed * dt;
+        motion = vStop <= vmax && vStop < Math.abs(speed) + a * dt * 2 ? 'DECELERATING' : (Math.abs(speed) < vmax - 0.5 ? 'ACCELERATING' : 'CRUISING');
+      }
+    } else { speed = 0; motion = 'STOPPED'; }
+
+    if (angle > 178) { angle = 178; speed = 0; target = null; if (s.angle < 178) this.toast('STOPPED BY RIGHT LIMIT SWITCH', ORG); }
+    if (angle < -178) { angle = -178; speed = 0; target = null; if (s.angle > -178) this.toast('STOPPED BY HOME LIMIT SWITCH', ORG); }
+
+    const err = this.offline() ? s.err : speed * 0.0045 + (Math.random() - 0.5) * 0.02 + (this.stalled() ? 2.4 : 0);
+    const hist = s.hist.concat([[angle, err]]);
+    if (hist.length > 200) hist.splice(0, hist.length - 200);
+    this.setState({ angle, speed, err, target, motion, hist, rx: this.offline() ? s.rx : s.rx + 1, t: s.t + 1 });
+    this.draw(hist);
+  }
+
+  draw(hist) {
+    const c = this.chartRef.current; if (!c) return;
+    const g = c.getContext('2d'), W = c.width, H = c.height;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = '#e6e4df'; g.lineWidth = 1;
+    for (let x = 0; x <= W; x += 58) { g.beginPath(); g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, H); g.stroke(); }
+    for (let y = 0; y <= H; y += 48) { g.beginPath(); g.moveTo(0, y + 0.5); g.lineTo(W, y + 0.5); g.stroke(); }
+    g.strokeStyle = '#cfccc5'; g.setLineDash([3, 5]);
+    g.beginPath(); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke(); g.setLineDash([]);
+    if (hist.length < 2) return;
+    const span = 30, off = 200 - hist.length;
+    const px = i => Math.round((i / 199) * W / 3) * 3;
+    const py = v => Math.round((H / 2 - (Math.max(-span, Math.min(span, v)) / span) * (H / 2 - 8)) / 3) * 3;
+    g.globalAlpha = this.offline() ? 0.3 : 1;
+    const series = (idx, color, scale) => {
+      g.fillStyle = color;
+      for (let i = 0; i < hist.length; i++) g.fillRect(px(i + off), py(hist[i][idx] * scale), 3, 3);
+    };
+    series(0, INK, 1);
+    series(1, ORG, 20);
+    g.globalAlpha = 1;
+  }
+
+  setS(k, v) {
+    const settings = Object.assign({}, this.state.settings); settings[k] = v;
+    const dirty = Object.keys(DEFAULTS).some(key => settings[key] !== this.savedRef()[key]);
+    this.setState({ settings, dirty });
+  }
+  savedRef() { return this.saved || (this.saved = Object.assign({}, DEFAULTS)); }
+  ask(title, body, label, color, action) { this.setState({ confirm: { title, body, label, color, action } }); }
+
+  renderVals() {
+    const s = this.state, st = s.settings, conn = this.conn(), fault = this.fault();
+    const offline = this.offline(), stalled = this.stalled(), wrong = this.wrongMode(), moveOk = this.canMove();
+    const sel = on => ({ bg: on ? INK : 'transparent', fg: on ? PAPER : '#6d6a64', border: on ? INK : LINE });
+    const mk = (label, on, fn) => Object.assign({ label, onPick: fn }, sel(on));
+    const alarmOn = name => fault === name;
+    const alarmList = [['OVERCURRENT', alarmOn('OVERCURRENT')], ['PHASE LOSS', alarmOn('PHASE LOSS')],
+      ['OVERVOLTAGE', alarmOn('OVERVOLTAGE')], ['UNDERVOLTAGE', alarmOn('UNDERVOLTAGE')],
+      ['POS ERROR', alarmOn('POSITION ERROR')], ['ENCODER', alarmOn('ENCODER ERROR')]];
+    const faultLabel = stalled ? 'STALL' : (fault !== 'NONE' && fault !== 'STALL' ? fault : (wrong ? 'MODE' : ''));
+    const modeLabel = s.modeFixed || !this.props.wrongControlMode ? 'BUS CLOSED-LOOP FOC' : 'OPEN-LOOP PULSE';
+
+    return {
+      isControl: s.screen === 'control', isSettings: s.screen === 'settings', isAdvanced: s.screen === 'advanced', isArm: s.screen === 'arm',
+      tabs: [['MISSION CONTROL', 'control'], ['SETTINGS', 'settings'], ['ADVANCED', 'advanced'], ['ARM / LOCKED', 'arm']].map(([label, id]) => ({
+        label, line: s.screen === id ? INK : 'transparent',
+        fg: s.screen === id ? INK : (id === 'arm' ? '#b4b1aa' : '#8a8780'),
+        onPick: () => this.setState({ screen: id })
+      })),
+      joints: [1, 2, 3, 4, 5, 6].map(n => ({
+        label: 'J' + n,
+        bg: n === 1 ? INK : 'transparent', fg: n === 1 ? PAPER : '#b4b1aa', border: n === 1 ? INK : LINE,
+        onPick: () => n === 1 ? null : this.toast('JOINT ' + n + ' NOT WIRED IN V1', ORG)
+      })),
+
+      wifiLabel: conn === 'LIVE' ? 'CONNECTED' : conn === 'RECONNECTING' ? 'RECONNECTING' : conn === 'LOST' ? 'LOST' : 'CONNECTED',
+      wifiColor: conn === 'LIVE' || conn === 'NO CAN RESPONSE' ? GRN : conn === 'RECONNECTING' ? ORG : RED,
+      canLabel: conn === 'NO CAN RESPONSE' ? 'NO RESPONSE' : conn === 'LOST' ? 'UNKNOWN' : 'OK',
+      canColor: conn === 'NO CAN RESPONSE' ? RED : conn === 'LOST' ? MUTED : GRN,
+      enabledLabel: offline ? 'UNKNOWN' : s.enabled ? 'ENABLED' : 'DISABLED',
+      enabledColor: offline ? MUTED : s.enabled ? GRN : ORG,
+      motionLabel: s.motion, hasFault: !!faultLabel, faultLabel,
+      estopLabel: s.estop ? 'RELEASE E-STOP' : 'E-STOP',
+      estopBg: s.estop ? 'transparent' : RED, estopFg: s.estop ? RED : '#ffffff',
+      onEstop: () => {
+        if (s.estop) { this.setState({ estop: false }); this.toast('E-STOP RELEASED / RE-ENABLE TO MOVE', ORG); }
+        else { this.setState({ estop: true, enabled: false, target: null, jogDir: 0, speed: 0 }); this.toast('E-STOP ENGAGED / MOTION CUT', RED); }
+      },
+
+      staleOpacity: offline ? 0.4 : 1,
+      motionOpacity: moveOk ? 1 : 0.38,
+      angleStr: s.angle.toFixed(2), speedStr: s.speed.toFixed(2), errStr: s.err.toFixed(3),
+      errColor: Math.abs(s.err) > st.stallTol ? RED : Math.abs(s.err) > 0.5 ? ORG : INK,
+      targetStr: s.target == null ? '----' : s.target.toFixed(2) + ' DEG',
+      progressPct: s.target == null ? '0%' : Math.max(0, Math.min(100, 100 - Math.abs(s.target - s.angle) / Math.max(0.01, Math.abs(s.target - s.moveStart)) * 100)).toFixed(0) + '%',
+      traceStamp: 'T+' + (s.t * 0.05).toFixed(1) + 'S',
+      chartRef: this.chartRef,
+
+      enableBg: s.enabled ? GRN : 'transparent', enableFg: s.enabled ? '#ffffff' : GRN, enableBorder: GRN,
+      disableBg: !s.enabled ? INK : 'transparent', disableFg: !s.enabled ? PAPER : INK,
+      onEnable: () => { if (this.locked()) return this.toast('BLOCKED / RESOLVE FAULT FIRST', RED); this.setState({ enabled: true }); this.toast('MOTOR ENABLED', GRN); },
+      onDisable: () => { this.setState({ enabled: false, target: null, jogDir: 0, speed: 0 }); this.toast('MOTOR DISABLED / SHAFT FREE', ORG); },
+      onStop: () => { if (!moveOk) return; this.setState({ target: null, jogDir: 0 }); this.toast('SMOOTH STOP', ORG); },
+
+      jogSpeed: s.jogSpeed, jogSpeedStr: String(s.jogSpeed), stepStr: String(s.step),
+      onJogSpeedChange: e => this.setState({ jogSpeed: Number(e.target.value) }),
+      onJogMinus: () => { if (moveOk) this.setState({ jogDir: -1 }); },
+      onJogPlus: () => { if (moveOk) this.setState({ jogDir: 1 }); },
+      onJogEnd: () => { if (s.jogDir !== 0) this.setState({ jogDir: 0 }); },
+      steps: [0.1, 1, 10, 45].map(v => mk(v + ' DEG', s.step === v, () => this.setState({ step: v }))),
+      onStepMinus: () => { if (moveOk) this.setState({ target: s.angle - s.step, moveStart: s.angle }); },
+      onStepPlus: () => { if (moveOk) this.setState({ target: s.angle + s.step, moveStart: s.angle }); },
+
+      gotoAngle: s.gotoAngle, gotoSpeed: s.gotoSpeed, gotoAccel: s.gotoAccel,
+      onGotoAngle: e => this.setState({ gotoAngle: e.target.value }),
+      onGotoSpeed: e => this.setState({ gotoSpeed: e.target.value }),
+      onGotoAccel: e => this.setState({ gotoAccel: e.target.value }),
+      onGo: () => {
+        if (!moveOk) return this.toast('BLOCKED / ENABLE THE MOTOR FIRST', RED);
+        if (!s.zeroed) return this.ask('CONFIRM / NOT ZEROED', 'ZERO HAS NOT BEEN SET SINCE POWER-UP, SO ABSOLUTE ANGLES DO NOT MAP TO THE JOINT. MOVE ANYWAY?', 'MOVE ANYWAY', ORG,
+          () => this.setState({ target: Number(s.gotoAngle) || 0, moveStart: s.angle }));
+        this.setState({ target: Number(s.gotoAngle) || 0, moveStart: s.angle });
+      },
+      onGoZero: () => { if (!moveOk) return; this.setState({ target: 0, moveStart: s.angle }); },
+      onSetZero: () => this.ask('CONFIRM / SET ZERO', 'THE CURRENT POSITION (' + s.angle.toFixed(2) + ' DEG) BECOMES JOINT ZERO. STORED REFERENCES SHIFT ACCORDINGLY.', 'SET ZERO', INK,
+        () => { this.setState({ zeroed: true, angle: 0, hist: [], target: null }); this.toast('ZERO SET AT CURRENT POSITION', GRN); }),
+      onHome: () => {},
+      onClearStall: () => { this.setState({ stallCleared: true }); this.toast('STALL FLAG CLEARED', GRN); },
+
+      showZeroWarn: !s.zeroed && !offline,
+      offline, stalled, wrongMode: wrong,
+      zeroLabel: s.zeroed ? 'SET' : 'NOT ZEROED', zeroColor: s.zeroed ? GRN : ORG,
+      homedLabel: s.homed ? 'HOMED' : 'NOT HOMED', homedColor: s.homed ? GRN : MUTED,
+      swLLabel: s.angle <= -177.5 ? 'ACTIVE' : 'INACTIVE', swLColor: s.angle <= -177.5 ? ORG : MUTED,
+      swRLabel: !st.swRight ? 'NOT FITTED' : s.angle >= 177.5 ? 'ACTIVE' : 'INACTIVE',
+      swRColor: !st.swRight ? '#c4c1ba' : s.angle >= 177.5 ? ORG : MUTED,
+      alarms: alarmList.map(([label, on]) => ({ label, color: on ? RED : '#c4c1ba' })),
+
+      dirtyLabel: s.dirty ? 'UNSAVED CHANGES' : 'IN SYNC WITH MOTOR', dirtyColor: s.dirty ? ORG : GRN,
+      saveBg: s.dirty ? INK : 'transparent', saveFg: s.dirty ? PAPER : '#b4b1aa',
+      onSave: () => { if (!s.dirty) return; this.saved = Object.assign({}, st); this.setState({ dirty: false }); this.toast('SETTINGS WRITTEN TO MOTOR', GRN); },
+      onReload: () => this.ask('CONFIRM / RELOAD', 'LOCAL EDITS ARE DISCARDED AND REPLACED BY THE VALUES STORED IN THE MOTOR.', 'RELOAD', ORG,
+        () => { this.setState({ settings: Object.assign({}, this.savedRef()), dirty: false }); this.toast('RELOADED FROM MOTOR', INK); }),
+
+      s_gear: st.gear, onGear: e => this.setS('gear', Number(e.target.value)),
+      invertLabel: st.invert ? 'ON' : 'OFF', invertBg: st.invert ? INK : 'transparent', invertFg: st.invert ? PAPER : '#8a8780', invertBorder: st.invert ? INK : LINE,
+      onInvert: () => this.setS('invert', !st.invert),
+      s_current: st.current, onCurrent: e => this.setS('current', Number(e.target.value)),
+      stallProtLabel: st.stallProt ? 'ON' : 'OFF', stallProtBg: st.stallProt ? INK : 'transparent', stallProtFg: st.stallProt ? PAPER : '#8a8780', stallProtBorder: st.stallProt ? INK : LINE,
+      onStallProt: () => this.setS('stallProt', !st.stallProt),
+      s_stallTol: st.stallTol, onStallTol: e => this.setS('stallTol', Number(e.target.value)),
+      s_timeout: st.timeout, onTimeout: e => this.setS('timeout', Number(e.target.value)),
+      homingMethods: ['LIMIT SWITCH', 'HARD STOP', 'SINGLE-TURN', 'DISABLED'].map(m => mk(m, st.method === m, () => this.setS('method', m))),
+      homingDirs: ['FORWARD', 'REVERSE', 'NEAREST'].map(d => mk(d, st.dir === d, () => this.setS('dir', d))),
+      s_fast: st.fast, onFast: e => this.setS('fast', Number(e.target.value)),
+      s_slow: st.slow, onSlow: e => this.setS('slow', Number(e.target.value)),
+      s_homeCurrent: st.homeCurrent, onHomeCurrent: e => this.setS('homeCurrent', Number(e.target.value)),
+      s_offset: st.offset, onOffset: e => this.setS('offset', Number(e.target.value)),
+      s_homeTimeout: st.homeTimeout, onHomeTimeout: e => this.setS('homeTimeout', Number(e.target.value)),
+      autoHomeLabel: st.autoHome ? 'ON' : 'OFF', autoHomeBg: st.autoHome ? INK : 'transparent', autoHomeFg: st.autoHome ? PAPER : '#8a8780', autoHomeBorder: st.autoHome ? INK : LINE,
+      onAutoHome: () => this.setS('autoHome', !st.autoHome),
+      swEnLabel: st.swEnable ? 'ON' : 'OFF', swEnBg: st.swEnable ? INK : 'transparent', swEnFg: st.swEnable ? PAPER : '#8a8780', swEnBorder: st.swEnable ? INK : LINE,
+      onSwEnable: () => this.setS('swEnable', !st.swEnable),
+      swLevels: ['LOW', 'HIGH'].map(l => mk(l, st.swLevel === l, () => this.setS('swLevel', l))),
+      swRightLabel: st.swRight ? 'ON' : 'OFF', swRightBg: st.swRight ? INK : 'transparent', swRightFg: st.swRight ? PAPER : '#8a8780', swRightBorder: st.swRight ? INK : LINE,
+      onSwRight: () => this.setS('swRight', !st.swRight),
+
+      modeLabel, modeColor: wrong ? RED : GRN,
+      onFixMode: () => this.ask('CONFIRM / SET CONTROL MODE', 'THE MOTOR IS SWITCHED TO BUS CLOSED-LOOP FOC AND THE SETTING IS PERSISTED. THE SHAFT MAY TWITCH.', 'SET FOC MODE', RED,
+        () => { this.setState({ modeFixed: true }); this.toast('CONTROL MODE SET TO FOC', GRN); }),
+      onCalibrate: () => this.ask('CONFIRM / ENCODER CALIBRATION', 'THE MOTOR MUST BE UNLOADED. IT SPINS 20+ TURNS AT 600 RPM, THEN RESTARTS. THE RESULT REPORTS BACK ABOUT 10 S LATER. DO NOT RUN THIS WITH THE JOINT MOUNTED.', 'CALIBRATE', ORG,
+        () => { this.setState({ enabled: false, target: null }); this.toast('CALIBRATION STARTED / MOTOR WILL RESTART', ORG); }),
+      onRestart: () => this.ask('CONFIRM / RESTART MOTOR', 'THE MOTOR REBOOTS. MOTION STOPS, THE LINK DROPS FOR A FEW SECONDS AND ZERO IS LOST.', 'RESTART', ORG,
+        () => { this.setState({ enabled: false, zeroed: false, target: null, speed: 0 }); this.toast('RESTART COMMAND SENT', ORG); }),
+      onFactory: () => this.ask('CONFIRM / FACTORY RESET', 'ALL STORED SETTINGS ARE LOST — GEAR RATIO, CURRENT, HOMING AND LIMIT CONFIG — AND THE MOTOR RESTARTS. THIS CANNOT BE UNDONE.', 'ERASE ALL', RED,
+        () => { this.saved = Object.assign({}, DEFAULTS); this.setState({ settings: Object.assign({}, DEFAULTS), dirty: false, zeroed: false, enabled: false }); this.toast('FACTORY RESET SENT', RED); }),
+      fw: 'V1.2.4', hw: 'MKS42ES REV.B',
+
+      wsLabel: offline ? 'CLOSED' : 'OPEN 20HZ', rxCount: String(s.rx),
+      hasToast: !!s.toast, toastText: s.toast || '', toastColor: s.toastColor,
+      hasConfirm: !!s.confirm,
+      confirmTitle: s.confirm ? s.confirm.title : '', confirmBody: s.confirm ? s.confirm.body : '',
+      confirmLabel: s.confirm ? s.confirm.label : '', confirmColor: s.confirm ? s.confirm.color : INK,
+      onCancel: () => this.setState({ confirm: null }),
+      onConfirm: () => { const a = s.confirm && s.confirm.action; this.setState({ confirm: null }); if (a) a(); },
+
+      invHover: { background: INK, color: PAPER },
+      invActive: { background: INK, color: PAPER },
+      goHover: { background: 'transparent', color: INK },
+      orangeHover: { background: ORG, color: '#ffffff' },
+      redHover: { background: RED, color: '#ffffff' }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
