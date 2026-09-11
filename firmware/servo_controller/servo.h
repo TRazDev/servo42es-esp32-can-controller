@@ -17,6 +17,7 @@ struct ServoState {
   uint8_t alarm = 0;          // 37H: 0 running, 1 stopped, 2+ = fault
   bool stalled = false;       // 3EH
   bool homed = false;         // 3BH
+  uint32_t positionJumps = 0; // 31H changed by more than POSITION_JUMP_COUNTS between samples
 };
 
 namespace servo {

@@ -23,6 +23,24 @@ int8_t jogDir = 0;
 uint16_t jogRpm = 0;
 uint32_t lastJogMs = 0;
 
+// ---- diagnostics: report motor restarts, stalls and alarms ----
+bool everOnline = false;
+uint32_t jumpExpectedUntil = 0;  // set zero (and reconnects) legitimately reset the position counter
+ServoState prevState;
+bool havePrevState = false;
+
+const char *alarmText(uint8_t alarm) {
+  switch (alarm) {
+    case 2: return "MOTOR ALARM / OVERCURRENT";
+    case 3: return "MOTOR ALARM / PHASE LOSS";
+    case 4: return "MOTOR ALARM / OVERVOLTAGE";
+    case 5: return "MOTOR ALARM / UNDERVOLTAGE (CHECK THE SUPPLY)";
+    case 6: return "MOTOR ALARM / POSITION ERROR";
+    case 7: return "MOTOR ALARM / ENCODER ERROR";
+    default: return nullptr;
+  }
+}
+
 // ---- motor parameters (Settings tab) ----
 enum : uint8_t { P_CURRENT = 1, P_STALL = 2, P_HEARTBEAT = 4, P_ALL = 7 };
 struct MotorParams {
@@ -60,6 +78,19 @@ void setStatus(void (*fn)(Status &)) {
 }
 
 void event(const char *text, const char *level) { web::publishEvent(text, level); }
+
+// Motor-side heartbeat (89H, not saved here): the motor stops by itself if the ESP32 goes silent.
+void sendHeartbeat() {
+  const uint32_t hb = settings::joint().heartbeatMs;
+  const uint8_t p[4] = {uint8_t(hb >> 24), uint8_t(hb >> 16), uint8_t(hb >> 8), uint8_t(hb)};
+  can_bus::send(MOTOR_ID, 0x89, p, 4);
+}
+
+// After a motor restart its position counter starts again near 0, so the zero is gone.
+void forgetMotion() {
+  jogDir = 0;
+  setStatus([](Status &s) { s.zeroed = false; s.jogging = false; s.hasTarget = false; });
+}
 
 bool moving() { return st.jogging || st.hasTarget; }
 
@@ -253,6 +284,7 @@ void execute(const Command &c) {
       {
         const uint8_t p = 0x00;
         can_bus::send(MOTOR_ID, 0x92, &p, 1);
+        jumpExpectedUntil = millis() + 1000;
       }
       break;
     case Cmd::ClearStall:
@@ -289,12 +321,31 @@ void update() {
     smoothStop();
     event("JOG STOPPED / NO KEEPALIVE FROM THE BROWSER", "warn");
   }
-  if (st.jogging && !servo::snapshot().online) {
+  const ServoState s = servo::snapshot();
+  if (st.jogging && !s.online) {
     jogDir = 0;
-    setStatus([](Status &s) { s.jogging = false; });
+    setStatus([](Status &x) { x.jogging = false; });
   }
 
   const uint32_t now = millis();
+
+  // Diagnostics: tell the browser about changes the motor doesn't report on its own.
+  if (havePrevState) {
+    if (prevState.online && !s.online) event("MOTOR STOPPED RESPONDING ON CAN", "err");
+    if (s.online && s.stalled && !prevState.stalled) {
+      event("STALL DETECTED / THE MOTOR RELEASED THE SHAFT", "err");
+      jogDir = 0;  // a stall keeps the position counter, so the zero stays valid
+      setStatus([](Status &x) { x.jogging = false; x.hasTarget = false; });
+    }
+    if (s.online && s.alarm != prevState.alarm && alarmText(s.alarm)) event(alarmText(s.alarm), "err");
+    if (s.positionJumps != prevState.positionJumps && (int32_t)(now - jumpExpectedUntil) > 0) {
+      event("MOTOR RESTARTED (POSITION COUNTER RESET) / ZERO IS LOST", "err");
+      forgetMotion();
+      sendHeartbeat();
+    }
+  }
+  prevState = s;
+  havePrevState = true;
   if (readPending && (int32_t)(now - readDeadline) > 0) finishRead();  // unanswered = unknown
   if ((writePending || savePending) && (int32_t)(now - writeDeadline) > 0) {
     writePending = 0;
@@ -393,12 +444,11 @@ void onReply(const twai_message_t &msg) {
 
 void onMotorOnline() {
   // A motor that was offline has probably been power-cycled: its position restarts near 0.
-  setStatus([](Status &s) { s.zeroed = false; s.jogging = false; s.hasTarget = false; });
-  jogDir = 0;
-  // Motor-side heartbeat (89H, not saved here): the motor stops by itself if the ESP32 goes silent.
-  const uint32_t hb = settings::joint().heartbeatMs;
-  const uint8_t p[4] = {uint8_t(hb >> 24), uint8_t(hb >> 16), uint8_t(hb >> 8), uint8_t(hb)};
-  can_bus::send(MOTOR_ID, 0x89, p, 4);
+  if (everOnline) event("MOTOR BACK ONLINE / IT PROBABLY RESTARTED, ZERO IS LOST", "warn");
+  everOnline = true;
+  forgetMotion();
+  jumpExpectedUntil = millis() + 2000;  // the first position sample after reconnecting may jump
+  sendHeartbeat();
 }
 
 }  // namespace control

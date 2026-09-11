@@ -10,6 +10,7 @@ namespace {
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 ServoState state;
 uint32_t lastReplyMs = 0;
+bool havePosition = false;
 
 // Fast telemetry, one request every POLL_STEP_MS in turn. Position (31H) is
 // every other slot (50 Hz) for a smooth trace; the rest refresh every ~140 ms.
@@ -37,7 +38,15 @@ void parse(const twai_message_t &msg) {
   portENTER_CRITICAL(&mux);
   state.rxFrames++;
   switch (d[0]) {
-    case 0x31: if (len == 8) state.positionCounts = readInt(d + 1, 6); break;
+    case 0x31:
+      if (len == 8) {
+        const int64_t p = readInt(d + 1, 6);
+        // Faster than the motor can turn: the counter was reset (motor restart or set zero).
+        if (havePosition && llabs(p - state.positionCounts) > POSITION_JUMP_COUNTS) state.positionJumps++;
+        state.positionCounts = p;
+        havePosition = true;
+      }
+      break;
     case 0x32: if (len == 4) state.speedRpm = (int16_t)readInt(d + 1, 2); break;
     case 0x39: if (len == 6) state.errorCounts = (int32_t)readInt(d + 1, 4); break;
     case 0xF1: if (len == 3) state.runStatus = d[1]; break;

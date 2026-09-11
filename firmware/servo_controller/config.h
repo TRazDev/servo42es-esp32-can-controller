@@ -24,6 +24,11 @@ constexpr uint8_t JOG_ACC = 100;               // ~128 RPM/s ramp for jog start/
 constexpr uint8_t STOP_ACC = 100;              // ramp for the smooth STOP button
 constexpr uint32_t JOG_TIMEOUT_MS = 300;       // stop a jog if the browser's keepalive stops
 constexpr uint16_t MAX_CURRENT_MA = 3000;      // SERVO42ES limit for 83H
+
+// Position is sampled every ~20 ms. At the motor's 3000 RPM maximum that is at most
+// ~820 counts per sample (up to ~1640 if a sample is late), so a bigger step means the
+// counter was reset (motor restart or set zero).
+constexpr int64_t POSITION_JUMP_COUNTS = 3000;
 // F6 (speed mode) direction bit that makes the encoder count go up (= CCW seen from
 // the shaft end). VERIFIED 2026-09-11: jog with bit 0 increased the angle.
 constexpr uint8_t F6_DIR_BIT_POSITIVE = 0;
