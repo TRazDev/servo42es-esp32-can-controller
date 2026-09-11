@@ -5,6 +5,11 @@ Don't delete old entries. If a decision changes, add a new entry that says it su
 
 ---
 
+## D-010 — Public repo under the MIT license (2026-09-11)
+- **Decision:** the GitHub repo is public, under the MIT license (copyright "Traz"). The Makerbase manual and design/support.js stay in the repo.
+- **Alternatives:** Apache-2.0, GPL-3.0; removing the third-party files first.
+- **Why:** MIT is simple and lets anyone reuse the firmware and UI. The user is fine with including the manual and the design runtime.
+
 ## D-009 — Firmware toolchain: Arduino IDE + arduino-esp32 core (2026-09-11)
 - **Decision:** write the firmware as an Arduino sketch. Build it with the Arduino IDE the user already has (ESP32 core 3.3.11).
 - **Alternatives:** PlatformIO (what Claude suggested), ESP-IDF.

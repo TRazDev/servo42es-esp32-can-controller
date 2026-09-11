@@ -45,3 +45,7 @@ docs/      protocol reference, hardware notes, design decisions
 design/    UI design reference
 firmware/  ESP32 sketch (Arduino IDE, coming next)
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE). The SERVO42ES manual in `docs/references/` belongs to Makerbase.

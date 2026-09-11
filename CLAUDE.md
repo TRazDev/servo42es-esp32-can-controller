@@ -24,7 +24,7 @@ See docs/progress.md (top entry = latest state and next steps).
 - docs/references/ — datasheets and manuals (local copies)
 
 Upstream docs: https://github.com/makerbase-motor/MKS-SERVO42ES-57ES (manual only, no code)
-This repo: https://github.com/TRazDev/servo42es-esp32-can-controller (private). Before making it public, remove or attribute the third-party files (the Makerbase manual PDF, design/support.js).
+This repo: https://github.com/TRazDev/servo42es-esp32-can-controller (public, MIT). The user wants the Makerbase manual PDF and design/support.js kept in the repo. Don't remove them.
 
 ## Rules for working on this project
 - Read docs/progress.md at the start of a session.
@@ -32,4 +32,4 @@ This repo: https://github.com/TRazDev/servo42es-esp32-can-controller (private). 
 - Put verified protocol facts in docs/protocol.md. Mark anything unverified "UNVERIFIED".
 - At the end of a session, add an entry to docs/progress.md: what changed, what's next, open issues.
 - Keep this file short. Put details in docs/.
-- Git commits: plain messages. No Claude signatures, session links or co-author lines.
+- Git commits and PR descriptions: plain messages. No Claude signatures, session links or co-author lines. Mentions of Claude tools inside project files (e.g. Claude Design, CLAUDE.md) are fine.
