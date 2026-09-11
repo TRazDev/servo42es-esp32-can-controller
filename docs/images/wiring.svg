@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 745" width="1200" height="745" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1200" height="745" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="40" y="58" font-size="24" font-weight="700" fill="#111">Wiring: ESP32-S3 → SN65HVD230 → MKS SERVO42ES</text>
+  <text x="40" y="86" font-size="14" fill="#555">Bench setup, one motor. Wire everything with the power off.</text>
+
+  <!-- ===== Wires (drawn first, under the blocks) ===== -->
+  <g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ESP32 to CAN module -->
+    <path d="M290 200 H440" stroke="#d62728"/>
+    <path d="M290 250 H440" stroke="#222222"/>
+    <path d="M290 300 H440" stroke="#2ca02c"/>
+    <path d="M290 350 H440" stroke="#1f77b4"/>
+    <!-- CAN bus -->
+    <path d="M640 240 H830" stroke="#7e3fb8"/>
+    <path d="M640 290 H830" stroke="#b28ad9"/>
+    <!-- Common ground ESP32 to motor -->
+    <path d="M290 450 H760 V340 H830" stroke="#222222"/>
+    <!-- Power -->
+    <path d="M780 600 V390 H830" stroke="#d62728"/>
+    <path d="M810 600 V440 H830" stroke="#222222"/>
+  </g>
+  <text x="735" y="270" font-size="12" font-style="italic" fill="#7e3fb8" text-anchor="middle">twist together</text>
+
+  <!-- ===== ESP32-S3 ===== -->
+  <rect x="40" y="140" width="250" height="400" rx="10" fill="#1b1b1b"/>
+  <text x="60" y="166" font-size="20" font-weight="700" fill="#fff">ESP32-S3</text>
+  <text x="60" y="185" font-size="13" fill="#b5b5b5">N16R8 dev board</text>
+  <g font-size="14" fill="#fff">
+    <text x="150" y="205">3V3</text>
+    <text x="150" y="255">GND</text>
+    <text x="150" y="305">GPIO 5 · CAN RX</text>
+    <text x="150" y="355">GPIO 4 · CAN TX</text>
+    <text x="150" y="455">GND</text>
+  </g>
+  <g fill="#d4af37">
+    <circle cx="290" cy="200" r="6"/><circle cx="290" cy="250" r="6"/>
+    <circle cx="290" cy="300" r="6"/><circle cx="290" cy="350" r="6"/>
+    <circle cx="290" cy="450" r="6"/>
+  </g>
+  <!-- USB -->
+  <rect x="140" y="528" width="50" height="22" rx="5" fill="#9a9a9a" stroke="#1b1b1b" stroke-width="2"/>
+  <text x="165" y="578" font-size="13" fill="#333" text-anchor="middle">USB-C → computer (power + programming)</text>
+
+  <!-- ===== SN65HVD230 module ===== -->
+  <rect x="440" y="170" width="200" height="210" rx="8" fill="#1f5fa8"/>
+  <g font-size="14" fill="#fff">
+    <text x="452" y="205">3.3V</text>
+    <text x="452" y="255">GND</text>
+    <text x="452" y="305">RX</text>
+    <text x="452" y="355">TX</text>
+  </g>
+  <g font-size="14" fill="#fff">
+    <text x="580" y="245">CANH</text>
+    <text x="580" y="295">CANL</text>
+  </g>
+  <text x="560" y="332" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">SN65HVD230</text>
+  <text x="560" y="350" font-size="12" fill="#d6e4f5" text-anchor="middle">CAN module</text>
+  <text x="560" y="368" font-size="12" fill="#d6e4f5" text-anchor="middle">120 Ω jumper ON</text>
+  <g fill="#d4af37">
+    <circle cx="440" cy="200" r="6"/><circle cx="440" cy="250" r="6"/>
+    <circle cx="440" cy="300" r="6"/><circle cx="440" cy="350" r="6"/>
+    <circle cx="640" cy="240" r="6"/><circle cx="640" cy="290" r="6"/>
+  </g>
+
+  <!-- ===== Motor cable ends ===== -->
+  <g stroke-width="6" stroke-linecap="round">
+    <line x1="830" y1="240" x2="920" y2="240" stroke="#7e3fb8"/>
+    <line x1="830" y1="290" x2="920" y2="290" stroke="#7e3fb8"/>
+    <line x1="830" y1="340" x2="920" y2="340" stroke="#222222"/>
+    <line x1="830" y1="390" x2="920" y2="390" stroke="#d62728"/>
+    <line x1="830" y1="440" x2="920" y2="440" stroke="#222222"/>
+    <line x1="850" y1="490" x2="920" y2="490" stroke="#d62728" stroke-dasharray="8 6"/>
+    <line x1="850" y1="530" x2="920" y2="530" stroke="#9a9a9a" stroke-dasharray="8 6"/>
+  </g>
+  <text x="838" y="496" font-size="18" font-weight="700" fill="#d62728" text-anchor="middle">✕</text>
+  <text x="838" y="536" font-size="18" font-weight="700" fill="#9a9a9a" text-anchor="middle">✕</text>
+
+  <!-- ===== MKS SERVO42ES ===== -->
+  <rect x="920" y="150" width="250" height="410" rx="10" fill="#1b1b1b"/>
+  <text x="1045" y="184" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">MKS SERVO42ES</text>
+  <text x="1045" y="204" font-size="12" fill="#b5b5b5" text-anchor="middle">supplied 2×11 cable, loose ends</text>
+  <g font-size="12.5" fill="#fff">
+    <text x="934" y="244">CAN H · purple, side B</text>
+    <text x="934" y="294">CAN L · purple, side A</text>
+    <text x="934" y="344">GND · any spare black</text>
+    <text x="934" y="394">24V+ · red, row 1 (VIN)</text>
+    <text x="934" y="444">24V− · black, row 2 (GND)</text>
+    <text x="934" y="494" fill="#ff7a6b" font-weight="700">5V OUT · DO NOT CONNECT</text>
+    <text x="934" y="534" fill="#b5b5b5">all other wires · unused, insulate</text>
+  </g>
+
+  <!-- ===== Lab PSU ===== -->
+  <rect x="620" y="600" width="240" height="95" rx="8" fill="#f2f2f2" stroke="#999" stroke-width="1.5"/>
+  <text x="780" y="626" font-size="16" font-weight="700" fill="#d62728" text-anchor="middle">+</text>
+  <text x="810" y="626" font-size="16" font-weight="700" fill="#222" text-anchor="middle">−</text>
+  <g fill="#d4af37"><circle cx="780" cy="600" r="6"/><circle cx="810" cy="600" r="6"/></g>
+  <text x="636" y="656" font-size="16" font-weight="700" fill="#111">Lab power supply</text>
+  <text x="636" y="678" font-size="13" fill="#444">24 V · current limit 1.5 A</text>
+
+  <!-- ===== Notes ===== -->
+  <g font-size="13" fill="#333">
+    <text x="40" y="626">• Common ground: ESP32, CAN module, motor and PSU GND are all connected.</text>
+    <text x="40" y="649">• Side A / B = the two rows of the motor connector. Row 10 is red on side A, black on side B.</text>
+    <text x="40" y="672">• Termination: 120 Ω on the module only. The motor has none; fine for a short bench cable.</text>
+    <text x="40" y="695">• The third red wire (row 10, side A) is the 5V output. Never connect it.</text>
+    <text x="40" y="718">• Connect the PSU last and switch it on only after checking the wiring.</text>
+  </g>
+</svg>

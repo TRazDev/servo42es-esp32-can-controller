@@ -23,7 +23,30 @@ The UI works in joint degrees. You set the gearbox ratio and the firmware conver
 | SN65HVD230 CAN transceiver module | 3.3 V, connects directly to the ESP32 |
 | 24 V power supply | The driver accepts 20–48 V |
 
-Wiring and pin assignments: [docs/hardware.md](docs/hardware.md) (in progress).
+## Wiring
+
+![Wiring diagram](docs/images/wiring.svg)
+
+| From | To |
+|---|---|
+| ESP32 3V3 | CAN module 3.3V |
+| ESP32 GND | CAN module GND |
+| ESP32 GPIO 4 | CAN module TX |
+| ESP32 GPIO 5 | CAN module RX |
+| CAN module CANH | Motor cable CAN H (purple, side B) |
+| CAN module CANL | Motor cable CAN L (purple, side A) |
+| ESP32 GND (second pin) | Motor cable GND (any spare black) |
+| PSU + (24 V) | Motor cable 24V+ (red, row 1) |
+| PSU − | Motor cable 24V− (black, row 2) |
+
+The motor's cable has 22 wires, and most colours appear twice, once per connector row. Side A is the row whose 10th wire is red; side B is the row whose 10th wire is black.
+
+- Twist CAN H and CAN L together and keep them short.
+- The red wire in row 10 (side A) is the motor's 5V output. Don't connect it.
+- Insulate every unused wire end.
+- The CAN module's 120 Ω termination is enough for a short bench cable. The motor has no termination of its own.
+
+Full pinout and measurements: [docs/hardware.md](docs/hardware.md).
 
 ## Features (v1)
 
