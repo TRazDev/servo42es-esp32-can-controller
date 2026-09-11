@@ -31,7 +31,8 @@ Newest first. The top entry should always describe the current state.
   - **Milestone: first motion.** `firmware/move_test` (waits for 'g' over serial; any key afterwards = E-STOP) enabled the motor and moved +90° and back at 60 RPM, with correct replies. The motor was already in mode 05, so nothing was written or saved. Details: protocol.md → VERIFIED first motion.
   - Direction: +counts = counter-clockwise seen from the shaft end (user observed).
   - Open: whether the position fully settles after "done".
-  - Next: the real firmware (TWAI + WiFi + web UI ported from design/). Network details are in network.md.
+  - Started the real firmware, `firmware/servo_controller`. **Step 1**: WiFi (station) + mDNS `servo-control.local` + CAN polling (31/32/39/F1/3A/3E/37 fast; 40 and mode slow) + a status page at `/` and JSON at `/api/status`. Read-only. Compiles with no warnings (D-012: no extra libraries).
+  - Next: the user fills in `secrets.h`, then upload and open http://servo-control.local. Step 2: WebSocket + port of the design/ UI + control commands.
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

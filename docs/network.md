@@ -4,7 +4,8 @@
 - Address: **http://servo-control.local**. Set with `WiFi.setHostname("servo-control")` and `MDNS.begin("servo-control")`. One ESP32 will drive all 6 joints on one CAN bus, so one hostname is enough.
 - Fallback: the IP address is printed on the serial monitor at boot. Optionally, reserve a fixed IP for the ESP32 in UniFi (client → Settings → Fixed IP).
 - No login in v1. Anyone on the home WiFi can open the page.
-- WiFi credentials go in `firmware/.../secrets.h`, which is gitignored and never committed. The user types them in themselves.
+- WiFi credentials go in `firmware/servo_controller/secrets.h` (copied from `secrets.h.example`). It's gitignored and never committed. The user types them in themselves.
+- The SSID must be the same network (and VLAN) the laptop or phone uses, or `.local` won't resolve.
 
 ## If servo-control.local doesn't resolve (UniFi settings to check)
 - **Different networks:** the laptop and the ESP32 must be on the same network/VLAN, or the UniFi **mDNS** option (reflector) must be on. mDNS is how `.local` names are found, and it doesn't cross VLANs by default.

@@ -5,6 +5,12 @@ Don't delete old entries. If a decision changes, add a new entry that says it su
 
 ---
 
+## D-012 — Firmware web server: built-in esp_http_server, no extra libraries (2026-09-11)
+- **Decision:** serve the page, the JSON API and (in step 2) the WebSocket with ESP-IDF's `esp_http_server`. It's included in the arduino-esp32 core, and WebSocket support is on in its build (`CONFIG_HTTPD_WS_SUPPORT=y` in esp32s3-libs 3.3.11).
+- **Alternatives:** ESPAsyncWebServer + AsyncTCP; the WebServer + WebSockets libraries.
+- **Why:** anyone who clones the repo can build it with only the ESP32 core, with no library versions to match.
+- **Consequences:** handlers run in the httpd task, so motor state is shared with the main loop through a mutex-protected snapshot (servo.cpp).
+
 ## D-011 — Network details: servo-control.local, no login (2026-09-11)
 - **Decision:** the ESP32 announces itself as `servo-control.local` (mDNS) on the home 2.4 GHz WiFi (UniFi APs), and prints its IP on the serial monitor. No login in v1.
 - **Alternatives:** a fixed IP reserved in the router; a PIN before the controls unlock.
