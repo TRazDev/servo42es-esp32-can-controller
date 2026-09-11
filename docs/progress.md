@@ -38,8 +38,8 @@ Newest first. The top entry should always describe the current state.
   - Build: `arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB,CDCOnBoot=default" firmware/servo_controller`. Upload port: `/dev/cu.usbmodem5C831103731` (COM USB-C).
   - The user confirmed the 2a UI looks right (screenshot).
   - **Step 2b written and uploaded:** control.cpp (command queue, safety checks, jog deadman, E-STOP latch, zero tracking, heartbeat 89H) + WebSocket commands + a UI with working controls, toasts and confirmations (D-013). E-STOP/Release tested over the WebSocket on the motor at rest: latch works, the motor stays enabled.
-  - Not yet tested: jog, step, go-to, set zero, smooth stop, stall clear. **F6 jog direction bit is UNVERIFIED** (config.h `F6_DIR_BIT_POSITIVE`); jog ▶▶ should make the angle go up.
-  - Next: the user tests the controls in the UI. Then 2c: settings (gear ratio in NVS, motor params).
+  - **Step 2b VERIFIED by the user:** jog both ways, step, go-to, set zero, go-to-zero, smooth stop and E-STOP/release all work. F6 direction bit 0 = angle up. Not yet exercised: stall clear (needs a stall).
+  - Next: 2c, the Settings tab. 2c-1: gear ratio + invert (ESP32 NVS), run current, stall protection, link-loss timeout (motor, saved with 60H), reload from motor. 2c-2 later: homing + limit switches (needs a switch to test).
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

@@ -26,5 +26,5 @@ constexpr uint8_t STOP_ACC = 100;              // ramp for the smooth STOP butto
 constexpr uint32_t JOG_TIMEOUT_MS = 300;       // stop a jog if the browser's keepalive stops
 constexpr uint32_t MOTOR_HEARTBEAT_MS = 1000;  // 89H: motor stops if the ESP32 goes silent
 // F6 (speed mode) direction bit that makes the encoder count go up (= CCW seen from
-// the shaft end). The manual is ambiguous; UNVERIFIED until the first jog test.
+// the shaft end). VERIFIED 2026-09-11: jog with bit 0 increased the angle.
 constexpr uint8_t F6_DIR_BIT_POSITIVE = 0;
