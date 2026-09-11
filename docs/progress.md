@@ -41,14 +41,14 @@ Newest first. The top entry should always describe the current state.
   - **Step 2b VERIFIED by the user:** jog both ways, step, go-to, set zero, go-to-zero, smooth stop and E-STOP/release all work. F6 direction bit 0 = angle up. Not yet exercised: stall clear (needs a stall).
   - **Step 2c-1 written and uploaded:** settings.cpp (NVS), units.h (all joint/motor conversions, incl. invert), Settings tab (joint: gear, invert; motor: current, stall protection/tolerance, link-loss timeout; dirty state, reload, save → writes 83/88/89, saves with 60H, reads back). Reading settings over the WebSocket VERIFIED (gear 1, current 1600, stall on/180°, timeout 1000 ms). D-014.
   - **Step 2c-1 VERIFIED by the user:** saving settings (writes 83/88/89 + 60H, NVS for gear/invert) works and persists across a page reload.
-- **Stall test (user, 2026-09-11):** blocking the shaft made the motor **restart**, not trip stall protection. The position counter reset to ~0, and the stall flag was clear afterwards. **Cause VERIFIED:** the PSU hit its 1.5 A current limit (CC light on) and the voltage fell to ~8 V, so the driver browned out. Fix: raise the PSU limit to ~3 A (hardware.md), then repeat the stall test to see real stall protection.
+- **Stall test (user, 2026-09-11):** blocking the shaft made the motor **restart**, not trip stall protection. The position counter reset to ~0, and the stall flag was clear afterwards. **Cause VERIFIED:** the PSU hit its 1.5 A current limit (CC light on) and the voltage fell to ~8 V, so the driver browned out. Fix: raise the PSU limit to ~3 A (hardware.md). **Re-test at ~3 A: stall detection worked correctly** (user).
   - Added diagnostics, shown as toasts: motor stopped responding, motor restarted (position jump > 3000 counts between samples, i.e. faster than possible), stall detected, motor alarms (e.g. undervoltage). A restart clears "zeroed".
   - Added boot logging of the ESP32 settings. NVS works: keys are stored and loaded. A gear of 1.0 after a reboot means 1.0 was the last value saved (the user confirmed they had set it back to 1).
 - **Left to do:**
   1. README is out of date (it still says the firmware is coming): update the status and features, and add build/flash steps (secrets.h, build_ui.py, board settings).
   2. Advanced tab actions, still disabled: restart motor (41H), encoder calibration (80H), factory reset (3FH), "fix mode" (82 05 + 60H).
   3. Homing + limit switches (2c-2): waiting until the user has a switch.
-  4. Hardware checks: position settling after "done" (98H threshold); stall detection + clear (untested); speed accuracy (commanded vs 32H readback).
+  4. Hardware checks: position settling after "done" (98H threshold); speed accuracy (commanded vs 32H readback). Stall detection: done.
   5. Optional: firmware updates over WiFi (OTA), useful once the ESP32 is built into the arm.
   6. Later, for the arm: 6 motors on the bus (IDs, J1–J6 selector), revisit the 600 RPM cap and the no-login decision (D-011).
   2. First milestone: send one CAN command and read back a response

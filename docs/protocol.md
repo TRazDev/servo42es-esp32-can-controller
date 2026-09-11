@@ -40,6 +40,7 @@ Setup: ESP32-S3 TWAI on GPIO 4/5, 500 kbit/s, one 120 Ω terminator (on the modu
   - `88` → stall enable + tolerance (1, 0x64 = defaults)
   - `89` → heartbeat, uint32 (it returned 1000, the value the ESP32 had set at runtime, unsaved)
   - Write replies for these codes are 3 bytes (status); read replies are longer. The firmware tells them apart by length.
+- **Stall protection (88H defaults: on, 0x64 = 180°):** with the PSU limit raised to ~3 A, blocking the shaft by hand trips stall protection. The UI showed "STALL DETECTED" (3EH flag) and the user reported it worked correctly (2026-09-11). With a 1.5 A PSU limit, the supply collapsed first and the motor restarted instead (see hardware.md).
 - **F7** (emergency stop) on a motor **at rest**: the motor stays **enabled** (3AH still 1, shaft held), but the reply status is **not 1** (treated as "nothing to stop"). The firmware only reports an F7 failure if the motor was moving. VERIFIED 2026-09-11 via the web UI's WebSocket.
 - Open: the "done" reply probably comes once within the 98H position-reached threshold (default 800/65535 × 360° ≈ 4.4°). The position was read right after "done" and may not have settled yet. Check by reading again ~0.5 s later.
 
