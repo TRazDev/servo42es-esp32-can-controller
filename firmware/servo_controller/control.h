@@ -2,11 +2,14 @@
 #include <stdint.h>
 #include "driver/twai.h"
 
-// Motion and safety logic. Commands arrive from the web server task and are
-// queued; update() executes them in the main loop, so all CAN writes happen there.
+// Motion, safety and settings logic. Commands arrive from the web server task and
+// are queued; update() executes them in the main loop, so all CAN writes happen there.
 namespace control {
 
-enum class Cmd : uint8_t { Enable, Disable, Stop, EStop, Release, Jog, Step, Goto, Zero, ClearStall, ClientGone };
+enum class Cmd : uint8_t {
+  Enable, Disable, Stop, EStop, Release, Jog, Step, Goto, Zero, ClearStall, ClientGone,
+  GetSettings, SaveSettings
+};
 
 struct Command {
   Cmd type;
@@ -14,6 +17,13 @@ struct Command {
   float deg = 0;      // Step: relative joint degrees; Goto: absolute joint degrees
   float speed = 0;    // joint deg/s
   float accel = 0;    // joint deg/s^2
+  // SaveSettings
+  float gear = 1;
+  bool invert = false;
+  uint16_t currentMa = 0;
+  bool stallOn = true;
+  float stallTolDeg = 0;  // joint degrees
+  uint32_t heartbeatMs = 0;
 };
 
 struct Status {

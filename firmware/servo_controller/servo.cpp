@@ -57,8 +57,9 @@ void parse(const twai_message_t &msg) {
   portEXIT_CRITICAL(&mux);
   lastReplyMs = millis();
 
-  switch (d[0]) {  // replies to control commands
+  switch (d[0]) {  // replies to control and settings commands
     case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7: case 0x92: case 0x3D:
+    case 0x83: case 0x88: case 0x89: case 0x60:
       control::onReply(msg);
       break;
   }

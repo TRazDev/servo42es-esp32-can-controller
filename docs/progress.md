@@ -39,7 +39,8 @@ Newest first. The top entry should always describe the current state.
   - The user confirmed the 2a UI looks right (screenshot).
   - **Step 2b written and uploaded:** control.cpp (command queue, safety checks, jog deadman, E-STOP latch, zero tracking, heartbeat 89H) + WebSocket commands + a UI with working controls, toasts and confirmations (D-013). E-STOP/Release tested over the WebSocket on the motor at rest: latch works, the motor stays enabled.
   - **Step 2b VERIFIED by the user:** jog both ways, step, go-to, set zero, go-to-zero, smooth stop and E-STOP/release all work. F6 direction bit 0 = angle up. Not yet exercised: stall clear (needs a stall).
-  - Next: 2c, the Settings tab. 2c-1: gear ratio + invert (ESP32 NVS), run current, stall protection, link-loss timeout (motor, saved with 60H), reload from motor. 2c-2 later: homing + limit switches (needs a switch to test).
+  - **Step 2c-1 written and uploaded:** settings.cpp (NVS), units.h (all joint/motor conversions, incl. invert), Settings tab (joint: gear, invert; motor: current, stall protection/tolerance, link-loss timeout; dirty state, reload, save → writes 83/88/89, saves with 60H, reads back). Reading settings over the WebSocket VERIFIED (gear 1, current 1600, stall on/180°, timeout 1000 ms). D-014.
+  - Next: the user tests Save in the Settings tab. Then 2c-2 (homing + limit switches) once a switch is available; Advanced tab actions (restart, calibration, factory reset) are also still disabled.
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

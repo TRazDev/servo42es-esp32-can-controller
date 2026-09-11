@@ -91,6 +91,14 @@
   .chips span.on { border-color:var(--red); color:var(--red); }
   .pending { font-size:10px; color:var(--org); letter-spacing:.14em; }
 
+  .setbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:12px; }
+  .setbar .btns { margin-left:auto; display:flex; gap:8px; } .setbar .btn { padding:9px 14px; }
+  .set { display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line2); padding:6px 0; }
+  .set > span { flex:1; font-size:11px; color:var(--dim); }
+  .set input { width:110px; border:none; border-bottom:1px solid var(--ink); background:transparent; color:var(--ink);
+               padding:5px 0; font-size:14px; text-align:right; }
+  .tog { width:110px; padding:6px; border-color:var(--line); color:var(--muted2); }
+  .tog.on { background:var(--ink); color:#fff; border-color:var(--ink); }
   .placeholder { border:1px dashed #cfccc5; padding:48px; display:flex; flex-direction:column; align-items:center; gap:16px;
                  color:var(--muted2); text-align:center; line-height:1.8; }
   footer { margin-top:auto; border-top:1px solid var(--line); padding-top:8px; display:flex; gap:20px; font-size:9px;
@@ -224,11 +232,39 @@
 
 <!-- ===================== SETTINGS ===================== -->
 <section id="tab-settings" hidden>
-  <div class="placeholder">
-    <div style="font-size:13px;letter-spacing:.2em">SETTINGS / FIRMWARE STEP 2C</div>
-    <div class="note" style="max-width:460px">GEAR RATIO, DIRECTION, RUN CURRENT, STALL PROTECTION, LINK-LOSS TIMEOUT, HOMING AND LIMIT SWITCHES
-      WILL BE EDITABLE HERE AND SAVED TO THE MOTOR.</div>
-    <div class="note">CURRENT GEAR RATIO: 1:<span id="gear2">&mdash;</span></div>
+  <div class="col" style="gap:18px">
+    <div class="setbar">
+      <span id="dirty" style="font-size:12px;font-weight:700">LOADING&hellip;</span>
+      <span class="note">EDITS ARE LOCAL UNTIL SAVED</span>
+      <div class="btns"><button class="btn" id="btnReload">RELOAD FROM MOTOR</button><button class="btn solid" id="btnSave">SAVE TO MOTOR</button></div>
+    </div>
+    <div class="grid2" style="gap:26px;align-items:start">
+      <div class="col" style="gap:10px">
+        <div class="sec"><span>JOINT</span><span>STORED ON THE ESP32</span></div>
+        <div class="set"><span>GEAR RATIO R</span><input type="number" id="sGear" min="0.01" max="1000" step="any"></div>
+        <div class="set"><span>INVERT DIRECTION</span><button class="btn tog" id="sInv">OFF</button></div>
+        <div class="note" id="sGearNote"></div>
+        <div class="note">INVERT FLIPS THE SIGN OF JOINT ANGLES AND MOVES. WITHOUT IT, + IS COUNTER-CLOCKWISE SEEN FROM THE MOTOR SHAFT END.</div>
+      </div>
+      <div class="col" style="gap:10px">
+        <div class="sec"><span>MOTOR</span><span>SAVED IN THE MOTOR</span></div>
+        <div class="col" style="gap:5px;padding:6px 0">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim)"><span>RUN CURRENT / MA</span><b id="sCurLbl" style="color:var(--ink)">&mdash;</b></div>
+          <input type="range" id="sCur" min="100" max="3000" step="50" style="width:100%;accent-color:var(--ink)">
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#b4b1aa"><span>100</span><span>DEFAULT 1600</span><span>3000</span></div>
+        </div>
+        <div class="set"><span>STALL PROTECTION</span><button class="btn tog" id="sStall">ON</button></div>
+        <div class="set"><span>STALL TOLERANCE / DEG</span><input type="number" id="sStol" min="0" step="any"></div>
+        <div class="note" id="sStolNote"></div>
+        <div class="set"><span>LINK-LOSS TIMEOUT / MS</span><input type="number" id="sHb" min="0" max="600000" step="100"></div>
+        <div class="note">0 = OFF. THE MOTOR STOPS BY ITSELF IF IT HEARS NOTHING FOR THIS LONG. THE ESP32 TALKS TO IT ~100 TIMES A SECOND, SO THIS ONLY TRIGGERS IF THE ESP32 HANGS OR IS UNPLUGGED.</div>
+        <div class="note c-org" id="sUnknown" hidden></div>
+      </div>
+      <div class="col" style="gap:10px">
+        <div class="sec"><span>HOMING &amp; LIMIT SWITCHES</span><span class="pending">NEXT STEP</span></div>
+        <div class="note">HOMING METHOD, DIRECTION, SPEEDS, CURRENT, OFFSET, TIMEOUT AND LIMIT SWITCH SETUP ARRIVE ONCE A LIMIT SWITCH IS FITTED TO TEST THEM.</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -309,10 +345,11 @@ $('host').textContent = location.hostname || 'local file';
 function connect() {
   wsState = 'connecting';
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || 'servo-control.local') + '/ws');
-  ws.onopen = () => { wsState = 'open'; };
+  ws.onopen = () => { wsState = 'open'; ws.send('{"c":"getsettings"}'); };
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.ev) { toast(m.ev, m.lvl); return; }
+    if (m.set) { fillSettings(m.set); return; }
     tel = m; lastMsg = performance.now(); msgCount++;
     hist.push([tel.pos, tel.err]);
     if (hist.length > HIST) hist.splice(0, hist.length - HIST);
@@ -444,6 +481,60 @@ function applyGear() {
   $('cap').textContent = tel.maxrpm + ' RPM (MOTOR)';
 }
 
+// ---------- settings ----------
+const SETTING_KEYS = ['gear', 'inv', 'cur', 'son', 'stol', 'hb'];
+let loaded = null;                 // as last reported by the ESP32 (unknown motor values -> defaults)
+let formInv = false, formStall = true;
+function toggle(el, on) { el.classList.toggle('on', on); el.textContent = on ? 'ON' : 'OFF'; }
+function fillSettings(s) {
+  const unknown = { cur: 'RUN CURRENT', son: 'STALL PROTECTION', stol: 'STALL TOLERANCE', hb: 'LINK-LOSS TIMEOUT' };
+  const missing = Object.keys(unknown).filter(k => s[k] === null).map(k => unknown[k]);
+  loaded = { gear: s.gear, inv: s.inv, cur: s.cur ?? 1600, son: s.son ?? 1, stol: s.stol ?? 180 / s.gear, hb: s.hb ?? 1000 };
+  $('sGear').value = +loaded.gear.toFixed(4);
+  formInv = !!loaded.inv; toggle($('sInv'), formInv);
+  $('sCur').value = loaded.cur;
+  formStall = !!loaded.son; toggle($('sStall'), formStall);
+  $('sStol').value = +loaded.stol.toFixed(3);
+  $('sHb').value = loaded.hb;
+  $('sUnknown').hidden = !missing.length;
+  $('sUnknown').textContent = 'THE MOTOR DID NOT REPORT ' + missing.join(', ') + ' · DEFAULTS SHOWN';
+  settingsNotes();
+}
+function readSettings() {
+  return { gear: num($('sGear'), NaN), inv: formInv ? 1 : 0, cur: num($('sCur'), NaN), son: formStall ? 1 : 0,
+           stol: num($('sStol'), NaN), hb: num($('sHb'), NaN) };
+}
+function settingsDirty() {
+  if (!loaded) return false;
+  const f = readSettings();
+  return SETTING_KEYS.some(k => !isFinite(f[k]) || Math.abs(f[k] - loaded[k]) > 1e-4 * Math.max(1, Math.abs(loaded[k])));
+}
+function settingsNotes() {
+  const g = num($('sGear'), 1), stol = num($('sStol'), 0);
+  $('sGearNote').textContent = '1 JOINT TURN = ' + g + ' MOTOR TURNS';
+  $('sStolNote').textContent = '= ' + (stol * g).toFixed(1) + '° AT THE MOTOR. THE MOTOR USES 1.8° STEPS, I.E. ' +
+    (1.8 / g).toFixed(3) + '° AT THE JOINT. THE SHAFT IS RELEASED WHEN THE ERROR EXCEEDS THIS.';
+  $('sCurLbl').textContent = $('sCur').value;
+}
+['sGear', 'sStol', 'sHb', 'sCur'].forEach(id => $(id).addEventListener('input', settingsNotes));
+$('sInv').onclick = () => { formInv = !formInv; toggle($('sInv'), formInv); };
+$('sStall').onclick = () => { formStall = !formStall; toggle($('sStall'), formStall); };
+$('btnReload').onclick = () => {
+  const go = () => send({ c: 'getsettings' });
+  if (settingsDirty()) ask('CONFIRM / RELOAD', 'LOCAL EDITS ARE DISCARDED AND REPLACED BY THE VALUES STORED IN THE ESP32 AND THE MOTOR.', 'RELOAD', ORG, go);
+  else go();
+};
+$('btnSave').onclick = () => {
+  const f = readSettings();
+  const err = !(f.gear >= 0.01 && f.gear <= 1000) ? 'GEAR RATIO MUST BE 0.01–1000'
+    : !(f.cur >= 100 && f.cur <= 3000) ? 'RUN CURRENT MUST BE 100–3000 MA'
+    : !(f.stol >= 0) ? 'STALL TOLERANCE MUST BE 0 OR MORE'
+    : !(f.hb >= 0 && f.hb <= 600000) ? 'LINK-LOSS TIMEOUT MUST BE 0–600000 MS' : '';
+  if (err) { toast(err, 'err'); return; }
+  if (tel && (tel.jog || tel.tgt !== null)) { toast('STOP THE MOTOR BEFORE SAVING SETTINGS', 'err'); return; }
+  send({ c: 'savesettings', ...f });
+};
+
 // ---------- rendering ----------
 function setStatus(el, text, cls) {
   el.className = 'val ' + (cls || '');
@@ -508,8 +599,13 @@ function render() {
     $('rssi').textContent = tel.rssi + ' DBM';
     $('uptime').textContent = tel.up + ' S';
     $('rx').textContent = tel.rx;
-    $('gear').textContent = $('gear2').textContent = +tel.gear.toFixed(3);
+    $('gear').textContent = +tel.gear.toFixed(3) + (tel.inv ? ' · INVERTED' : '');
   }
+  const dirty = settingsDirty();
+  $('dirty').textContent = !loaded ? 'LOADING…' : dirty ? 'UNSAVED CHANGES' : 'IN SYNC';
+  $('dirty').className = !loaded ? 'c-mut' : dirty ? 'c-org' : 'c-grn';
+  $('btnSave').disabled = !loaded || !dirty || !isOpen();
+  $('btnReload').disabled = !isOpen();
   $('wsLabel').textContent = 'WS ' + (isLive ? 'OPEN ' + rate + 'HZ' : wsState === 'closed' ? 'CLOSED' : 'CONNECTING');
   $('rate').textContent = 'WS ' + rate + ' HZ';
   draw(!on);

@@ -13,6 +13,7 @@
 #include "can_bus.h"
 #include "control.h"
 #include "servo.h"
+#include "settings.h"
 #include "web.h"
 
 #if __has_include("secrets.h")
@@ -30,6 +31,7 @@ void setup() {
   delay(300);
   Serial.println("\nservo-controller starting");
 
+  settings::begin();
   if (!can_bus::begin()) Serial.println("CAN: TWAI driver failed to start");
   servo::begin();
   control::begin();

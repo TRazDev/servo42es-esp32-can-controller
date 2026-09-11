@@ -13,5 +13,7 @@ bool begin();
 void publishTelemetry();
 // Shows a short message (toast) in every connected browser.
 void publishEvent(const char *text, const char *level);
+// Sends a ready-made JSON object to every connected browser (e.g. {"set":{...}}).
+void publishJson(const char *json);
 
 }  // namespace web

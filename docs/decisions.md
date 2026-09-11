@@ -5,6 +5,18 @@ Don't delete old entries. If a decision changes, add a new entry that says it su
 
 ---
 
+## D-014 — Where settings live (2026-09-11)
+- **Decision:**
+  - **ESP32 (NVS):** gear ratio, invert direction, link-loss timeout.
+  - **Motor (written, then saved with 60H):** run current (83H), stall protection + tolerance (88H), link-loss timeout (89H).
+  - "Invert" is a sign flip in the ESP32's unit conversion (units.h), not the motor's 86H direction setting.
+  - The ESP32 re-sends 89H every time the motor comes online.
+- **Alternatives:** invert via 86H; everything stored only in the motor.
+- **Why:** gear ratio and invert are joint properties that the motor can't store. The manual doesn't say whether 86H also flips the encoder reading, while a sign flip on the ESP32 is predictable. Keeping them on the ESP32 also means a motor factory reset doesn't lose them.
+- **Consequences:**
+  - Saving writes the heartbeat into the motor's flash. In bus mode, the motor then stops after that long without commands, even without the ESP32 attached.
+  - The Settings tab shows motor values as read back from the motor (00H); if a value doesn't come back, the default is shown and flagged.
+
 ## D-013 — Motion safety in the firmware (2026-09-11)
 - **Decision:**
   - Browser commands go through a queue and are executed in the main loop (control.cpp).

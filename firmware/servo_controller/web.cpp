@@ -6,6 +6,8 @@
 #include "control.h"
 #include "index_html_gz.h"
 #include "servo.h"
+#include "settings.h"
+#include "units.h"
 
 namespace web {
 namespace {
@@ -13,11 +15,12 @@ namespace {
 httpd_handle_t server = nullptr;
 constexpr size_t MAX_CLIENTS = 8;
 
-// Telemetry in joint units (motor units divided by GEAR_RATIO). Keys are short
-// because this goes out 20 times a second; ui/index.html reads them.
+// Telemetry in joint units (see units.h). Keys are short because this goes out
+// 20 times a second; ui/index.html reads them.
 size_t telemetryJson(char *buf, size_t size) {
   const ServoState s = servo::snapshot();
   const control::Status c = control::status();
+  const settings::Joint j = settings::joint();
   char fw[16] = "";
   if (s.versionKnown) snprintf(fw, sizeof(fw), "V%u.%u.%u", s.firmware[0], s.firmware[1], s.firmware[2]);
   char target[16] = "null";
@@ -25,15 +28,15 @@ size_t telemetryJson(char *buf, size_t size) {
   const int n = snprintf(buf, size,
       "{\"on\":%d,\"en\":%d,\"mode\":%d,\"run\":%u,\"alm\":%u,\"stall\":%d,\"homed\":%d,"
       "\"z\":%d,\"es\":%d,\"jog\":%d,\"tgt\":%s,"
-      "\"cnt\":%lld,\"pos\":%.3f,\"spd\":%.2f,\"err\":%.4f,\"gear\":%.3f,\"maxrpm\":%u,"
+      "\"cnt\":%lld,\"pos\":%.3f,\"spd\":%.2f,\"err\":%.4f,\"gear\":%.4f,\"inv\":%d,\"maxrpm\":%u,"
       "\"fw\":\"%s\",\"hw\":%u,\"id\":%u,\"rssi\":%d,\"rx\":%lu,\"up\":%lu}",
       s.online, s.enabled, s.mode, s.runStatus, s.alarm, s.stalled, s.homed,
       c.zeroed, c.estop, c.jogging, target,
       (long long)s.positionCounts,
-      s.positionCounts * 360.0 / 16384.0 / GEAR_RATIO,
-      s.speedRpm * 6.0 / GEAR_RATIO,
-      s.errorCounts * 360.0 / 51200.0 / GEAR_RATIO,
-      GEAR_RATIO, MAX_MOTOR_RPM, fw, s.hardware, MOTOR_ID, (int)WiFi.RSSI(),
+      units::countsToDeg(s.positionCounts, j),
+      units::rpmToDegPerS(s.speedRpm, j),
+      units::errorToDeg(s.errorCounts, j),
+      j.gear, j.invert, MAX_MOTOR_RPM, fw, s.hardware, MOTOR_ID, (int)WiFi.RSSI(),
       (unsigned long)s.rxFrames, (unsigned long)(millis() / 1000));
   return n > 0 && (size_t)n < size ? n : 0;
 }
@@ -73,6 +76,17 @@ void handleCommand(const char *json) {
   else if (!strcmp(name, "release")) cmd.type = Cmd::Release;
   else if (!strcmp(name, "zero")) cmd.type = Cmd::Zero;
   else if (!strcmp(name, "clearstall")) cmd.type = Cmd::ClearStall;
+  else if (!strcmp(name, "getsettings")) cmd.type = Cmd::GetSettings;
+  else if (!strcmp(name, "savesettings")) {
+    cmd.type = Cmd::SaveSettings;
+    cmd.gear = jsonNumber(json, "gear", NAN);
+    cmd.invert = jsonNumber(json, "inv", 0) != 0;
+    cmd.currentMa = (uint16_t)constrain(jsonNumber(json, "cur", 0), 0.0f, 65535.0f);
+    cmd.stallOn = jsonNumber(json, "son", 1) != 0;
+    cmd.stallTolDeg = jsonNumber(json, "stol", NAN);
+    cmd.heartbeatMs = (uint32_t)constrain(jsonNumber(json, "hb", -1), -1.0f, 4.0e9f);
+    if (isnan(cmd.gear) || isnan(cmd.stallTolDeg) || jsonNumber(json, "hb", -1) < 0) return;
+  }
   else if (!strcmp(name, "jog")) {
     cmd.type = Cmd::Jog;
     const float dir = jsonNumber(json, "dir", 0);
@@ -190,6 +204,8 @@ void publishTelemetry() {
   char json[512];
   broadcast(json, telemetryJson(json, sizeof(json)));
 }
+
+void publishJson(const char *json) { broadcast(json, strlen(json)); }
 
 void publishEvent(const char *text, const char *level) {
   char json[160];

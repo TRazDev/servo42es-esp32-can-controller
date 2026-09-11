@@ -35,6 +35,11 @@ Setup: ESP32-S3 TWAI on GPIO 4/5, 500 kbit/s, one 120 Ω terminator (on the modu
 - **Direction:** positive F4 counts turn the shaft **counter-clockwise, seen from the shaft end** (observed by the user), and the encoder count (31H) increases. This matches 40H "cal 1" (encoder decreases when turning CW) and 32H (CCW speed > 0). Setting 86H (direction) was left at its default.
 - **F6** (speed mode) direction: **bit 7 = 0 → count goes up (CCW seen from the shaft end)**, bit 7 = 1 → count goes down. VERIFIED 2026-09-11 with the web UI's jog.
 - **Web UI controls tested by the user (2026-09-11):** jog both ways (F6, with deadman stop), step (F4), go-to and go-to-zero (F5), set zero (92H), smooth stop, E-STOP (F7) + release. All worked.
+- **00H read-parameter** works for 83H, 88H and 89H, and replies in the same format as the write (VERIFIED 2026-09-11):
+  - `83` → run current, uint16 (1600 = factory default)
+  - `88` → stall enable + tolerance (1, 0x64 = defaults)
+  - `89` → heartbeat, uint32 (it returned 1000, the value the ESP32 had set at runtime, unsaved)
+  - Write replies for these codes are 3 bytes (status); read replies are longer. The firmware tells them apart by length.
 - **F7** (emergency stop) on a motor **at rest**: the motor stays **enabled** (3AH still 1, shaft held), but the reply status is **not 1** (treated as "nothing to stop"). The firmware only reports an F7 failure if the motor was moving. VERIFIED 2026-09-11 via the web UI's WebSocket.
 - Open: the "done" reply probably comes once within the 98H position-reached threshold (default 800/65535 × 360° ≈ 4.4°). The position was read right after "done" and may not have settled yet. Check by reading again ~0.5 s later.
 
