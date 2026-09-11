@@ -45,7 +45,7 @@ Newest first. The top entry should always describe the current state.
   - Added diagnostics, shown as toasts: motor stopped responding, motor restarted (position jump > 3000 counts between samples, i.e. faster than possible), stall detected, motor alarms (e.g. undervoltage). A restart clears "zeroed".
   - Added boot logging of the ESP32 settings. NVS works: keys are stored and loaded. A gear of 1.0 after a reboot means 1.0 was the last value saved (the user confirmed they had set it back to 1).
 - **Left to do:**
-  1. README is out of date (it still says the firmware is coming): update the status and features, and add build/flash steps (secrets.h, build_ui.py, board settings).
+  1. README: **done** (status, features, build/flash steps, supply current note). The rest below is parked at the user's request ("leave other stuff for later").
   2. Advanced tab actions: **done. Restart and calibration VERIFIED by the user; factory reset not tested** (the user was unsure about recovery; recovery path documented in protocol.md). Restart motor (41H), factory reset (3FH), encoder calibration (80H, calibration banner until the motor is power-cycled), fix mode (82 05 + 60H, also on the wrong-mode banner). A mode-write reply "82 00/01" is told apart from a mode read by a pending flag (control::expectingModeWriteReply). Expected restarts are reported as warnings, not errors.
   3. Homing + limit switches (2c-2): waiting until the user has a switch.
   4. Hardware checks: position settling after "done" (98H threshold); speed accuracy (commanded vs 32H readback). Stall detection: done.

@@ -48,25 +48,50 @@ The motor's cable has 22 wires, and most colours appear twice, once per connecto
 
 Full pinout and measurements: [docs/hardware.md](docs/hardware.md).
 
-## Features (v1)
+Power: set the supply's current limit to about 3 A per motor. At 1.5 A, a blocked shaft pulled the 24 V supply down to 8 V and the driver reset itself.
 
-- Enable/disable, jog, step, and move to an absolute angle
-- Live angle, speed and position error, with a 10 s trace
-- Set zero; homing and limit-switch configuration
-- Alarm and stall reporting, clear stall
-- E-STOP that stops and holds position (doesn't release the shaft)
-- Motor settings (current, direction, stall protection, link-loss timeout) saved to the motor
+## Features
+
+- Web UI served by the ESP32 at `http://servo-control.local`, with live data over a WebSocket at 20 Hz
+- Jog (hold to move), step, go to angle, set zero, smooth stop
+- E-STOP (button or Esc key): stops the motor and holds position; motion stays blocked until released
+- Live angle, speed and position error with a 10 s trace; motor status, alarms and stall detection
+- Messages when the motor restarts, stalls or raises an alarm, so a lost zero doesn't go unnoticed
+- Joint units: gear ratio and direction are set in the UI and stored on the ESP32
+- Motor settings saved in the motor: run current, stall protection, link-loss timeout
+- Maintenance: restart motor, encoder calibration, factory reset, set control mode
+- Safety: motion is refused unless the motor is online, enabled and in bus closed-loop mode. Jog stops if the browser goes quiet for 300 ms. Speed is capped at 600 RPM. The motor stops by itself if the ESP32 goes silent.
 
 ## Status
 
-Early stage. The protocol notes and UI design are done; firmware is next. The screenshot shows the UI design, not the running firmware yet.
+Working on the bench with one motor. The CAN link, motion, settings, stall detection, restart and calibration have been tested on hardware. Not done yet: homing and limit switches, and multiple motors on one bus.
+
+## Build and flash
+
+1. Install the Arduino IDE and the **esp32 by Espressif** boards package (tested with 3.3.11). No other libraries are needed.
+2. Copy `firmware/servo_controller/secrets.h.example` to `secrets.h` in the same folder, and fill in your WiFi name and password. The ESP32-S3 only supports 2.4 GHz. The file is ignored by git.
+3. Open `firmware/servo_controller/servo_controller.ino` and choose these board settings:
+   - Board: ESP32S3 Dev Module
+   - Flash Size: 16MB
+   - PSRAM: OPI PSRAM
+   - Partition Scheme: 16M Flash (3MB APP/9.9MB FATFS)
+   - USB CDC On Boot: Disabled
+4. Upload through the USB-C port labelled COM.
+5. Open `http://servo-control.local`. The serial monitor (115200 baud) also prints the IP address.
+
+Pins, motor ID and hostname are in `config.h`. The UI source is `ui/index.html`; after editing it, run `python3 tools/build_ui.py` and rebuild. That regenerates the gzipped copy the firmware serves.
+
+The motor must be in bus closed-loop mode (05) at 500 kbit/s with ID 1. Ours shipped that way. If yours doesn't, the UI shows a banner with a button to switch it.
 
 ## Layout
 
 ```
-docs/      protocol reference, hardware notes, design decisions
-design/    UI design reference
-firmware/  ESP32 sketch (Arduino IDE, coming next)
+firmware/servo_controller/  ESP32 firmware (Arduino sketch) and the web UI (ui/index.html)
+firmware/can_test/          minimal read-only CAN test
+firmware/move_test/         first motion test
+tools/                      build_ui.py: gzips the UI into a header for the firmware
+docs/                       protocol reference, hardware notes, decisions, progress log
+design/                     original UI design
 ```
 
 ## License
