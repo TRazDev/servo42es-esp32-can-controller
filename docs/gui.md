@@ -28,6 +28,9 @@ Not in v1: multi-motor sync, trajectories, kinematics.
 - A move can target at most ±8,388,607 counts, which is ±512 motor turns or **±512/R joint turns**. For example, at R=50 that's ±10 joint turns, so it's fine for an arm.
 - Use **F5 (absolute coordinate move)** as the main move command. It uses encoder units, so it doesn't depend on microstepping. You can also change its target while it's moving, which will be useful for streaming arm motion later.
 
+## Direction
+With the motor defaults, a positive move turns the shaft counter-clockwise, seen from the shaft end (VERIFIED). The GUI's "Invert direction" setting flips the sign of joint angles. Whether a joint needs it depends on how the motor is mounted in the arm.
+
 ## Zeroing
 Two separate things, and the GUI should keep them apart:
 - **Set zero (92H):** "the joint is at zero right now." This is what the user asked for. It's a main-screen button.

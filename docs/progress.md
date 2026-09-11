@@ -29,7 +29,8 @@ Newest first. The top entry should always describe the current state.
   1. Wiring done and checked from photos (hardware.md → As built). First 24 V power-up: the motor holds position. The user insulated the loose ends and confirmed the jumpers are on GPIO 4/5. Wrote `firmware/can_test` (read-only: 40H version, 31H position every second, bus status).
   - **Milestone reached: the ESP32 talks to the motor over CAN.** Uploaded with arduino-cli through the COM port (`/dev/cu.usbmodem5C831103731`) and read the serial output from the Mac. Version and position replies are correct, with 0 bus errors (protocol.md → VERIFIED).
   - **Milestone: first motion.** `firmware/move_test` (waits for 'g' over serial; any key afterwards = E-STOP) enabled the motor and moved +90° and back at 60 RPM, with correct replies. The motor was already in mode 05, so nothing was written or saved. Details: protocol.md → VERIFIED first motion.
-  - Open: physical rotation direction for +counts; whether the position fully settles after "done".
+  - Direction: +counts = counter-clockwise seen from the shaft end (user observed).
+  - Open: whether the position fully settles after "done".
   - Next: the real firmware (TWAI + WiFi + web UI ported from design/). Network details are in network.md.
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
