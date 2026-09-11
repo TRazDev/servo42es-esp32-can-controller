@@ -75,6 +75,10 @@ These are general ESP32-S3 facts. Check them against the actual board's pinout.
 | PSU +24 V | Cable red, row 1 (VIN), either side | not the row-10 red, which is the 5V output |
 | PSU − | Cable black, row 2 (GND) | |
 
+**As built (2026-09-11, from the user's photos):** wired as in the table, except the motor GND goes to the **top** GND of the right header rather than the bottom one (both are GND). Both VIN reds and both row-2 blacks are joined at the PSU clips. Module jumpers: 3.3V white, GND black, RX white, TX purple.
+Board: the silkscreen on the underside reads **YD-ESP32-23 2022-V1.3**. The USB-C ports are labelled **COM** (through the CH343P USB-serial chip) and **USB** (native USB-OTG).
+**First power-up (24 V, no ESP32):** the motor holds its position (shaft locked). That's expected in the factory mode 03 (pulse/dir), where the En input with nothing connected counts as "enabled".
+
 Diagram with every pin in its real position: `docs/images/wiring.svg`. The module is drawn turned 180° so that its header faces the ESP32 and its screw terminal faces the motor.
 
 ## Bus settings
