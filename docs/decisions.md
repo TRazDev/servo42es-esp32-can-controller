@@ -5,6 +5,20 @@ Don't delete old entries. If a decision changes, add a new entry that says it su
 
 ---
 
+## D-013 — Motion safety in the firmware (2026-09-11)
+- **Decision:**
+  - Browser commands go through a queue and are executed in the main loop (control.cpp).
+  - Motion is refused unless the motor is online, enabled, in mode 05, not stalled, and E-STOP isn't latched.
+  - Every motion command is capped at **600 motor RPM** (config.h).
+  - Jog is hold-to-move. The page repeats the command every 100 ms; the ESP32 stops the jog after **300 ms** of silence, or when that WebSocket closes.
+  - E-STOP sends F7 and latches until Release. The motor stays enabled (D-007).
+  - Each time the motor comes online, the ESP32 sets the motor heartbeat (89H) to **1 s**, without saving it. Polling sends ~100 frames/s, so the heartbeat only fires if the ESP32 hangs.
+- **Alternatives:** executing commands directly in the web server task; relying on the browser's button-release event alone for jog.
+- **Why:** WiFi can drop mid-jog. The motor must stop without depending on the browser or even the ESP32.
+- **Consequences:**
+  - The firmware tracks "zeroed" and resets it when the motor reappears after being offline (probable power cycle).
+  - Acceleration below ~78 motor RPM/s isn't possible (acc = 1); the UI shows the limits for the current gear ratio.
+
 ## D-012 — Firmware web server: built-in esp_http_server, no extra libraries (2026-09-11)
 - **Decision:** serve the page, the JSON API and (in step 2) the WebSocket with ESP-IDF's `esp_http_server`. It's included in the arduino-esp32 core, and WebSocket support is on in its build (`CONFIG_HTTPD_WS_SUPPORT=y` in esp32s3-libs 3.3.11).
 - **Alternatives:** ESPAsyncWebServer + AsyncTCP; the WebServer + WebSockets libraries.

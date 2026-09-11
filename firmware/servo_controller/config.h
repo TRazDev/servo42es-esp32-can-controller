@@ -18,3 +18,13 @@ constexpr float GEAR_RATIO = 1.0f;
 
 // Telemetry pushed to the browser over the WebSocket.
 constexpr uint32_t TELEMETRY_INTERVAL_MS = 50;  // 20 Hz
+
+// Motion limits and safety
+constexpr uint16_t MAX_MOTOR_RPM = 600;        // cap for every motion command (bench safety)
+constexpr uint8_t JOG_ACC = 100;               // ~128 RPM/s ramp for jog start/stop
+constexpr uint8_t STOP_ACC = 100;              // ramp for the smooth STOP button
+constexpr uint32_t JOG_TIMEOUT_MS = 300;       // stop a jog if the browser's keepalive stops
+constexpr uint32_t MOTOR_HEARTBEAT_MS = 1000;  // 89H: motor stops if the ESP32 goes silent
+// F6 (speed mode) direction bit that makes the encoder count go up (= CCW seen from
+// the shaft end). The manual is ambiguous; UNVERIFIED until the first jog test.
+constexpr uint8_t F6_DIR_BIT_POSITIVE = 0;

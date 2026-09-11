@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "can_bus.h"
 #include "config.h"
+#include "control.h"
 
 namespace servo {
 namespace {
@@ -55,6 +56,12 @@ void parse(const twai_message_t &msg) {
   }
   portEXIT_CRITICAL(&mux);
   lastReplyMs = millis();
+
+  switch (d[0]) {  // replies to control commands
+    case 0xF3: case 0xF4: case 0xF5: case 0xF6: case 0xF7: case 0x92: case 0x3D:
+      control::onReply(msg);
+      break;
+  }
 }
 
 }  // namespace
@@ -79,9 +86,12 @@ void update() {
     pollIndex = (pollIndex + 1) % sizeof(FAST_POLL);
   }
 
+  const bool online = lastReplyMs != 0 && now - lastReplyMs < MOTOR_TIMEOUT_MS;
   portENTER_CRITICAL(&mux);
-  state.online = lastReplyMs != 0 && now - lastReplyMs < MOTOR_TIMEOUT_MS;
+  const bool wasOnline = state.online;
+  state.online = online;
   portEXIT_CRITICAL(&mux);
+  if (online && !wasOnline) control::onMotorOnline();
 }
 
 ServoState snapshot() {

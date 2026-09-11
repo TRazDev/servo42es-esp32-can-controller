@@ -13,14 +13,14 @@
          padding:18px; min-height:100vh; display:flex; flex-direction:column; gap:16px; }
   button, input, select { font:inherit; letter-spacing:inherit; }
   button { cursor:pointer; }
-  button:disabled, .locked { opacity:.38; cursor:not-allowed; }
+  button:disabled { opacity:.38; cursor:not-allowed; }
   [hidden] { display:none !important; }
   @keyframes blink { 0%,55%{opacity:1} 56%,100%{opacity:.25} }
 
   .lbl { font-size:9px; color:var(--muted); letter-spacing:.18em; }
   .sec { border-bottom:1px solid var(--line); padding-bottom:4px; font-size:9px; letter-spacing:.2em; color:var(--muted);
          display:flex; justify-content:space-between; }
-  .note { font-size:10px; color:var(--muted); }
+  .note { font-size:10px; color:var(--muted); line-height:1.6; }
 
   header { display:flex; flex-wrap:wrap; align-items:flex-end; gap:24px; border-bottom:1px solid var(--ink); padding-bottom:12px; }
   .title .t1 { font-size:17px; font-weight:700; letter-spacing:.02em; }
@@ -31,11 +31,13 @@
   .dot { width:7px; height:7px; display:inline-block; background:currentColor; }
   .joints { display:flex; gap:3px; }
   .joints button { width:22px; height:22px; padding:0; font-size:10px; border:1px solid var(--line); background:transparent; color:#b4b1aa; }
-  .joints button.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .joints button.on { background:var(--ink); color:var(--paper); border-color:var(--ink); opacity:1; }
   .hright { margin-left:auto; display:flex; align-items:center; gap:12px; }
   .fault { border:1px solid var(--red); color:var(--red); padding:5px 9px; font-size:11px; animation:blink 1.2s steps(1,end) infinite; }
   .estop { border:1px solid var(--red); background:var(--red); color:#fff; font-size:13px; font-weight:700; letter-spacing:.16em;
            padding:14px 26px; min-width:150px; }
+  .estop.latched { background:transparent; color:var(--red); }
+  .estop:hover { filter:brightness(.92); }
 
   nav { display:flex; gap:30px; flex-wrap:wrap; border-bottom:1px solid var(--line); }
   nav button { border:none; border-bottom:2px solid transparent; background:transparent; color:var(--muted2);
@@ -45,9 +47,9 @@
 
   .banner { border:1px solid var(--red); background:#fdefec; color:var(--red); padding:9px 12px; font-size:11px;
             display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-  .banner b { font-weight:700; }
   .banner .sub { color:var(--dim); }
   .banner.warn { border-color:var(--org); background:#fdf6e8; color:#8a5c05; }
+  .banner button { margin-left:auto; border:1px solid var(--red); background:var(--red); color:#fff; padding:7px 13px; font-size:11px; font-weight:700; }
 
   .grid1 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
   .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
@@ -63,13 +65,22 @@
   .legend span { display:flex; align-items:center; gap:6px; } .legend i { width:16px; height:2px; display:inline-block; }
 
   .btn { border:1px solid var(--ink); background:transparent; color:var(--ink); padding:11px; font-size:11px; }
+  .btn:not(:disabled):hover { background:var(--ink); color:#fff; }
   .btn.solid { background:var(--ink); color:#fff; font-weight:700; letter-spacing:.2em; padding:13px; }
+  .btn.solid:not(:disabled):hover { background:transparent; color:var(--ink); }
   .btn.grn { border-color:var(--grn); color:var(--grn); font-weight:700; }
+  .btn.grn.on { background:var(--grn); color:#fff; opacity:1; }
+  .btn.ink.on { background:var(--ink); color:#fff; opacity:1; }
   .btn.org { border-color:var(--org); color:var(--org); font-weight:700; }
+  .btn.org:not(:disabled):hover { background:var(--org); color:#fff; }
   .btn.red { border-color:var(--red); color:var(--red); font-weight:700; }
   .btn.dash { border:1px dashed #cfccc5; color:#b4b1aa; }
-  .row { display:flex; gap:8px; } .row > * { flex:1; }
-  .steps { display:flex; gap:6px; flex-wrap:wrap; } .steps button { flex:1; min-width:54px; padding:8px 4px; }
+  .btn.sel { background:var(--ink); color:#fff; }
+  .jog { padding:16px; font-size:16px; touch-action:none; user-select:none; -webkit-user-select:none; }
+  .jog.held { background:var(--ink); color:#fff; }
+  .row { display:flex; gap:8px; } .row > * { flex:1; min-width:0; }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; } .steps > * { flex:1; min-width:54px; padding:8px 4px; }
+  .steps input { border:1px solid var(--line); text-align:center; font-size:11px; background:transparent; color:var(--ink); }
   .field { display:flex; flex-direction:column; gap:4px; }
   .field input { border:none; border-bottom:1px solid var(--line); background:transparent; color:var(--ink); padding:5px 0; font-size:15px; width:100%; }
   .field input.big2 { border-bottom-color:var(--ink); font-size:28px; font-weight:700; padding:6px 0; }
@@ -86,6 +97,14 @@
            letter-spacing:.16em; color:#b4b1aa; flex-wrap:wrap; }
   footer .r { margin-left:auto; }
   .c-grn { color:var(--grn); } .c-org { color:var(--org); } .c-red { color:var(--red); } .c-mut { color:var(--muted); }
+
+  #toast { position:fixed; left:18px; bottom:18px; z-index:100; border:1px solid var(--ink); background:#fff; padding:10px 14px;
+           font-size:11px; max-width:420px; }
+  #confirm { position:fixed; inset:0; z-index:110; background:rgba(255,255,255,.88); display:flex; align-items:center;
+             justify-content:center; padding:20px; }
+  #confirm .box { border:1px solid var(--ink); background:#fff; max-width:470px; width:100%; box-shadow:0 18px 40px rgba(17,17,16,.12); }
+  #confirm .hd { border-bottom:1px solid var(--ink); padding:9px 14px; font-size:10px; letter-spacing:.2em; }
+  #confirm .bd { padding:18px; display:flex; flex-direction:column; gap:16px; font-size:12px; line-height:1.8; color:#3d3b36; }
 </style>
 </head>
 <body>
@@ -103,7 +122,7 @@
   </div>
   <div class="hright">
     <div class="fault" id="fault" hidden></div>
-    <button class="estop" id="estop" disabled title="Wired up in firmware step 2b">E-STOP</button>
+    <button class="estop" id="estop" title="Emergency stop (Esc). The motor stops and holds position.">E-STOP</button>
   </div>
 </header>
 
@@ -117,9 +136,10 @@
 <!-- ===================== CONTROL ===================== -->
 <section id="tab-control" class="col" style="gap:16px">
   <div class="banner" id="offlineBanner" hidden><b>LINK DOWN</b><span class="sub" id="offlineText">READOUTS ARE STALE</span></div>
+  <div class="banner" id="estopBanner" hidden><b>E-STOP ENGAGED</b><span class="sub">MOTION BLOCKED &middot; THE MOTOR HOLDS POSITION</span><button id="btnRelease">RELEASE E-STOP</button></div>
   <div class="banner" id="modeBanner" hidden><b>WRONG CONTROL MODE</b><span class="sub" id="modeText"></span></div>
-  <div class="banner" id="stallBanner" hidden><b>STALL DETECTED</b><span class="sub">MOTION HALTED &middot; SHAFT DEVIATION EXCEEDED TOLERANCE</span></div>
-  <div class="banner warn" id="zeroBanner" hidden><b>NOT ZEROED</b><span>ABSOLUTE MOVES ARE MEANINGLESS UNTIL ZERO IS SET OR HOMING RUNS.</span></div>
+  <div class="banner" id="stallBanner" hidden><b>STALL DETECTED</b><span class="sub">MOTION HALTED &middot; SHAFT DEVIATION EXCEEDED TOLERANCE</span><button id="btnClearStall">CLEAR STALL</button></div>
+  <div class="banner warn" id="zeroBanner" hidden><b>NOT ZEROED</b><span>ANGLES ARE RELATIVE TO WHERE THE MOTOR POWERED UP UNTIL ZERO IS SET OR HOMING RUNS.</span></div>
 
   <div class="grid1">
     <div class="col" id="readout" style="gap:14px">
@@ -130,8 +150,8 @@
         <div><div class="lbl">POS ERROR / DEG</div><div class="mid" id="err">&mdash;</div></div>
       </div>
       <div>
-        <div class="lbl" style="display:flex;justify-content:space-between"><span>TARGET</span><span style="color:var(--ink)">----</span></div>
-        <div class="bar"><div></div></div>
+        <div class="lbl" style="display:flex;justify-content:space-between"><span>TARGET</span><span style="color:var(--ink)" id="target">----</span></div>
+        <div class="bar"><div id="progress"></div></div>
       </div>
     </div>
     <div class="col chartcol" style="gap:10px">
@@ -147,33 +167,38 @@
 
   <div class="grid2">
     <div class="col">
-      <div class="sec"><span>DRIVE</span><span class="pending">CONTROLS: FIRMWARE STEP 2B</span></div>
+      <div class="sec"><span>DRIVE</span></div>
       <div class="row">
-        <button class="btn grn" disabled>ENABLE</button>
-        <button class="btn" disabled>DISABLE</button>
-        <button class="btn org" disabled>STOP</button>
+        <button class="btn grn" id="btnEnable">ENABLE</button>
+        <button class="btn ink" id="btnDisable">DISABLE</button>
+        <button class="btn org" id="btnStop">STOP</button>
       </div>
       <div class="note">DISABLE RELEASES THE SHAFT &middot; FREE ROTATION</div>
-      <div class="col locked" style="gap:9px;border-top:1px solid var(--line2);padding-top:12px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em"><span>JOG / HOLD TO MOVE</span><span class="c-mut">20 DEG&middot;S</span></div>
-        <div class="row"><button class="btn" style="padding:16px;font-size:16px" disabled>&#9664;&#9664;</button><button class="btn" style="padding:16px;font-size:16px" disabled>&#9654;&#9654;</button></div>
-        <input type="range" min="1" max="120" value="20" disabled style="width:100%;accent-color:var(--ink)">
-        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em;margin-top:6px"><span>STEP</span><span class="c-mut">1 DEG</span></div>
-        <div class="steps"><button class="btn" disabled>0.1 DEG</button><button class="btn" disabled>1 DEG</button><button class="btn" disabled>10 DEG</button><button class="btn" disabled>45 DEG</button></div>
-        <div class="row"><button class="btn" disabled>&minus; STEP</button><button class="btn" disabled>STEP +</button></div>
+      <div class="col" style="gap:9px;border-top:1px solid var(--line2);padding-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em"><span>JOG / HOLD TO MOVE</span><span class="c-mut"><span id="jogLbl">&mdash;</span> DEG&middot;S</span></div>
+        <div class="row"><button class="btn jog" id="jogMinus">&#9664;&#9664;</button><button class="btn jog" id="jogPlus">&#9654;&#9654;</button></div>
+        <input type="range" id="jogSpeed" min="6" max="720" step="6" value="60" style="width:100%;accent-color:var(--ink)">
+        <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em;margin-top:6px"><span>STEP</span><span class="c-mut"><span id="stepLbl">1</span> DEG</span></div>
+        <div class="steps" id="steps">
+          <button class="btn" data-step="0.1">0.1 DEG</button><button class="btn sel" data-step="1">1 DEG</button>
+          <button class="btn" data-step="10">10 DEG</button><button class="btn" data-step="45">45 DEG</button>
+          <input type="number" id="stepCustom" placeholder="CUSTOM" step="any" min="0">
+        </div>
+        <div class="row"><button class="btn" id="stepMinus">&minus; STEP</button><button class="btn" id="stepPlus">STEP +</button></div>
       </div>
     </div>
 
     <div class="col">
       <div class="sec"><span>ABSOLUTE MOVE</span></div>
-      <div class="col locked" style="gap:11px">
-        <div class="field"><span class="lbl">TARGET ANGLE / DEG</span><input class="big2" type="number" value="90.00" disabled></div>
+      <div class="col" style="gap:11px">
+        <div class="field"><span class="lbl">TARGET ANGLE / DEG</span><input class="big2" type="number" id="gotoDeg" value="90.00" step="0.1"></div>
         <div class="pair" style="gap:14px">
-          <div class="field"><span class="lbl">SPEED / DEG&middot;S</span><input type="number" value="30" disabled></div>
-          <div class="field"><span class="lbl">ACCEL / DEG&middot;S2</span><input type="number" value="60" disabled></div>
+          <div class="field"><span class="lbl">SPEED / DEG&middot;S</span><input type="number" id="gotoSpd" value="60" min="0"></div>
+          <div class="field"><span class="lbl">ACCEL / DEG&middot;S2</span><input type="number" id="gotoAcc" value="600" min="0"></div>
         </div>
-        <button class="btn solid" disabled>GO &#9654;</button>
-        <div class="row"><button class="btn" disabled>GO TO ZERO</button><button class="btn" disabled>SET ZERO</button></div>
+        <div class="note" id="limits"></div>
+        <button class="btn solid" id="btnGo">GO &#9654;</button>
+        <div class="row"><button class="btn" id="btnGoZero">GO TO ZERO</button><button class="btn" id="btnSetZero">SET ZERO</button></div>
         <button class="btn dash" disabled>HOME &mdash; NOT CONFIGURED</button>
       </div>
     </div>
@@ -216,12 +241,12 @@
       <div class="kv"><span>REQUIRED</span><span>BUS CLOSED-LOOP FOC</span></div>
     </div>
     <div class="col" style="gap:10px">
-      <div class="sec" style="border-color:var(--org);color:var(--org)"><span>ENCODER CALIBRATION</span></div>
+      <div class="sec" style="border-color:var(--org);color:var(--org)"><span>ENCODER CALIBRATION</span><span class="pending">LATER STEP</span></div>
       <div style="font-size:11px;color:#8a5c05;line-height:1.7">MOTOR MUST CARRY NO LOAD. IT WILL SPIN 20+ TURNS AT 600 RPM, THEN RESTART. RUN THIS BEFORE MOUNTING INTO THE ARM.</div>
       <button class="btn org" disabled>RUN CALIBRATION</button>
     </div>
     <div class="col" style="gap:10px">
-      <div class="sec"><span>MAINTENANCE</span></div>
+      <div class="sec"><span>MAINTENANCE</span><span class="pending">LATER STEP</span></div>
       <button class="btn" disabled>RESTART MOTOR</button>
       <button class="btn red" disabled>FACTORY RESET</button>
       <div class="note">FACTORY RESET RESTORES MOTOR DEFAULTS (MODE, CAN ID AND BITRATE INCLUDED) AND RESTARTS IT. THE GEAR RATIO IS STORED ON THE ESP32 AND IS KEPT.</div>
@@ -232,6 +257,7 @@
       <div class="kv"><span>HARDWARE</span><span id="hw">&mdash;</span></div>
       <div class="kv"><span>MOTOR ID</span><span id="mid">&mdash;</span></div>
       <div class="kv"><span>CAN BITRATE</span><span>500 KBIT/S</span></div>
+      <div class="kv"><span>SPEED CAP</span><span id="cap">&mdash;</span></div>
       <div class="kv"><span>WIFI SIGNAL</span><span id="rssi">&mdash;</span></div>
       <div class="kv"><span>ESP32 UPTIME</span><span id="uptime">&mdash;</span></div>
     </div>
@@ -253,43 +279,172 @@
   <span class="r">ESP32-S3 &middot; <span id="host"></span></span>
 </footer>
 
+<div id="toast" hidden></div>
+<div id="confirm" hidden>
+  <div class="box">
+    <div class="hd" id="cfTitle"></div>
+    <div class="bd">
+      <div id="cfBody"></div>
+      <div class="row"><button class="btn" id="cfCancel">CANCEL</button><button class="btn solid" id="cfOk"></button></div>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
-const INK = '#111110', ORG = '#c07a14';
+const INK = '#111110', ORG = '#c07a14', RED = '#c8371c', GRN = '#1f7a45';
 const $ = id => document.getElementById(id);
 const HIST = 200;              // 10 s at 20 Hz
 const STALE_MS = 1000;         // no telemetry for this long = link lost
+const JOG_KEEPALIVE_MS = 100;  // the ESP32 stops a jog after 300 ms of silence
 
 let ws = null, wsState = 'connecting', lastMsg = 0, msgCount = 0, rate = 0;
 let tel = null;                // latest telemetry from the ESP32
+let gearSeen = null, moveStart = null, lastTarget = null;
 const hist = [];
 
 $('host').textContent = location.hostname || 'local file';
 
-// ---- tabs ----
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['control', 'settings', 'advanced', 'arm'].forEach(t => $('tab-' + t).hidden = t !== b.dataset.tab);
-});
-
-// ---- websocket ----
+// ---------- connection ----------
 function connect() {
   wsState = 'connecting';
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || 'servo-control.local') + '/ws');
   ws.onopen = () => { wsState = 'open'; };
   ws.onmessage = ev => {
-    try { tel = JSON.parse(ev.data); } catch (e) { return; }
-    lastMsg = performance.now(); msgCount++;
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    if (m.ev) { toast(m.ev, m.lvl); return; }
+    tel = m; lastMsg = performance.now(); msgCount++;
     hist.push([tel.pos, tel.err]);
     if (hist.length > HIST) hist.splice(0, hist.length - HIST);
+    if (tel.gear !== gearSeen) { gearSeen = tel.gear; applyGear(); }
   };
-  ws.onclose = () => { wsState = 'closed'; setTimeout(connect, 1000); };
+  ws.onclose = () => { wsState = 'closed'; jogEnd(); setTimeout(connect, 1000); };
   ws.onerror = () => ws.close();
 }
 connect();
 setInterval(() => { rate = msgCount; msgCount = 0; }, 1000);
 
-// ---- rendering ----
+const isOpen = () => ws && ws.readyState === WebSocket.OPEN;
+function send(obj) {
+  if (!isOpen()) { toast('NOT CONNECTED TO THE ESP32', 'err'); return false; }
+  ws.send(JSON.stringify(obj)); return true;
+}
+const live = () => wsState === 'open' && tel && performance.now() - lastMsg < STALE_MS;
+const motorOn = () => live() && tel.on;
+const canMove = () => motorOn() && tel.en && !tel.stall && tel.mode === 5 && !tel.es;
+const num = (el, fallback) => { const v = parseFloat(el.value); return isFinite(v) ? v : fallback; };
+
+// ---------- toast & confirm ----------
+let toastTimer = null;
+function toast(text, level) {
+  const t = $('toast');
+  t.textContent = text;
+  t.style.color = t.style.borderColor = level === 'err' ? RED : level === 'warn' ? ORG : level === 'ok' ? GRN : INK;
+  t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 3000);
+}
+let confirmAction = null;
+function ask(title, body, label, color, action) {
+  $('cfTitle').textContent = title; $('cfBody').textContent = body; $('cfOk').textContent = label;
+  $('cfTitle').style.color = $('cfTitle').style.borderColor = color;
+  $('cfOk').style.background = $('cfOk').style.borderColor = color;
+  confirmAction = action; $('confirm').hidden = false;
+}
+$('cfCancel').onclick = () => { $('confirm').hidden = true; confirmAction = null; };
+$('cfOk').onclick = () => { $('confirm').hidden = true; const a = confirmAction; confirmAction = null; if (a) a(); };
+
+// ---------- tabs ----------
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['control', 'settings', 'advanced', 'arm'].forEach(t => $('tab-' + t).hidden = t !== b.dataset.tab);
+});
+
+// ---------- E-STOP ----------
+function estop() {
+  if (!isOpen()) { toast('NOT CONNECTED / CUT MOTOR POWER AT THE PSU', 'err'); return; }
+  jogEnd(); send({ c: 'estop' });
+}
+$('estop').onclick = () => (tel && tel.es ? send({ c: 'release' }) : estop());
+$('btnRelease').onclick = () => send({ c: 'release' });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); estop(); } });
+
+// ---------- drive ----------
+$('btnEnable').onclick = () => send({ c: 'enable' });
+$('btnDisable').onclick = () => { jogEnd(); send({ c: 'disable' }); };
+$('btnStop').onclick = () => { jogEnd(); send({ c: 'stop' }); };
+$('btnClearStall').onclick = () => send({ c: 'clearstall' });
+
+// ---------- jog (hold to move; keepalive every 100 ms while held) ----------
+let jogDir = 0, jogTimer = null, jogBtn = null;
+const jogSpeed = () => num($('jogSpeed'), 0);
+function jogSend() { if (isOpen()) ws.send(JSON.stringify({ c: 'jog', dir: jogDir, spd: jogSpeed() })); }
+function jogStart(dir, e) {
+  e.preventDefault();
+  if (!canMove()) { toast(tel && tel.es ? 'BLOCKED / RELEASE E-STOP FIRST' : 'BLOCKED / MOTOR NOT READY', 'err'); return; }
+  jogBtn = e.currentTarget; jogBtn.setPointerCapture(e.pointerId); jogBtn.classList.add('held');
+  jogDir = dir; jogSend();
+  clearInterval(jogTimer); jogTimer = setInterval(jogSend, JOG_KEEPALIVE_MS);
+}
+function jogEnd() {
+  clearInterval(jogTimer); jogTimer = null;
+  if (jogBtn) { jogBtn.classList.remove('held'); jogBtn = null; }
+  if (!jogDir) return;
+  jogDir = 0;
+  if (isOpen()) ws.send('{"c":"jog","dir":0}');
+}
+[['jogMinus', -1], ['jogPlus', 1]].forEach(([id, dir]) => {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => jogStart(dir, e));
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => b.addEventListener(t, jogEnd));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+window.addEventListener('blur', jogEnd);
+document.addEventListener('visibilitychange', () => { if (document.hidden) jogEnd(); });
+$('jogSpeed').oninput = () => { $('jogLbl').textContent = +jogSpeed().toFixed(2); if (jogDir) jogSend(); };
+
+// ---------- step ----------
+let stepDeg = 1;
+function setStep(v, fromPreset) {
+  stepDeg = v; $('stepLbl').textContent = +v.toFixed(3);
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('sel', fromPreset && +b.dataset.step === v));
+  if (fromPreset) $('stepCustom').value = '';
+}
+document.querySelectorAll('#steps button').forEach(b => b.onclick = () => setStep(+b.dataset.step, true));
+$('stepCustom').oninput = () => { const v = num($('stepCustom'), 0); if (v > 0) setStep(v, false); };
+const moveParams = () => ({ spd: num($('gotoSpd'), 60), acc: num($('gotoAcc'), 600) });
+$('stepMinus').onclick = () => send({ c: 'step', deg: -stepDeg, ...moveParams() });
+$('stepPlus').onclick = () => send({ c: 'step', deg: stepDeg, ...moveParams() });
+
+// ---------- absolute moves & zero ----------
+function gotoAngle(deg) {
+  const go = () => send({ c: 'goto', deg, ...moveParams() });
+  if (tel && !tel.z) ask('CONFIRM / NOT ZEROED', 'ZERO HAS NOT BEEN SET SINCE THE MOTOR POWERED UP, SO ANGLES ARE RELATIVE TO WHERE IT STARTED. MOVE ANYWAY?', 'MOVE ANYWAY', ORG, go);
+  else go();
+}
+$('btnGo').onclick = () => {
+  const deg = parseFloat($('gotoDeg').value);
+  if (!isFinite(deg)) { toast('ENTER A TARGET ANGLE', 'err'); return; }
+  gotoAngle(deg);
+};
+$('btnGoZero').onclick = () => gotoAngle(0);
+$('btnSetZero').onclick = () => ask('CONFIRM / SET ZERO',
+  'THE CURRENT POSITION (' + (tel ? tel.pos.toFixed(2) : '?') + ' DEG) BECOMES JOINT ZERO. THE ESP32 FORGETS IT WHEN THE MOTOR LOSES POWER.',
+  'SET ZERO', INK, () => send({ c: 'zero' }));
+
+// Motor limits in joint units: 1 RPM speed steps, at most maxrpm, ramp at least ~78 RPM/s.
+function applyGear() {
+  const g = tel.gear, res = 6 / g, max = tel.maxrpm * 6 / g, minAcc = 20000 / 255 * 6 / g;
+  const jog = $('jogSpeed');
+  jog.min = jog.step = +res.toFixed(3);
+  jog.max = +(120 * 6 / g).toFixed(3);                 // jog up to 120 motor RPM
+  jog.value = Math.min(+jog.max, 10 * 6 / g);           // default 10 motor RPM
+  $('jogLbl').textContent = +jogSpeed().toFixed(2);
+  $('limits').textContent = 'AT GEAR 1:' + +g.toFixed(3) + ' · SPEED ' + +res.toFixed(2) + '–' + +max.toFixed(1) +
+    ' DEG/S IN ' + +res.toFixed(2) + ' DEG/S STEPS · ACCEL AT LEAST ' + Math.round(minAcc) + ' DEG/S²';
+  $('cap').textContent = tel.maxrpm + ' RPM (MOTOR)';
+}
+
+// ---------- rendering ----------
 function setStatus(el, text, cls) {
   el.className = 'val ' + (cls || '');
   const b = el.querySelector('b'); if (b) b.textContent = text; else el.textContent = text;
@@ -301,35 +456,50 @@ const MODES = { 0: 'PULSE+PULSE OPEN-LOOP', 1: 'PULSE+DIR OPEN-LOOP', 2: 'PULSE+
 const HW = { 1: 'S42ES RS485', 2: 'S42ES BUS', 3: 'S57ES RS485', 4: 'S57ES BUS' };
 
 function render() {
-  const now = performance.now();
-  const live = wsState === 'open' && tel && now - lastMsg < STALE_MS;
-  const motorOn = live && tel.on;
+  const isLive = live(), on = motorOn(), move = canMove();
 
-  setStatus($('wifi'), live ? 'CONNECTED' : wsState === 'open' || wsState === 'connecting' ? 'RECONNECTING' : 'LOST',
-            live ? 'c-grn' : wsState === 'closed' ? 'c-red' : 'c-org');
-  setStatus($('can'), !live ? 'UNKNOWN' : tel.on ? 'OK' : 'NO RESPONSE', !live ? 'c-mut' : tel.on ? 'c-grn' : 'c-red');
-  setStatus($('motor'), motorOn ? (tel.en ? 'ENABLED' : 'DISABLED') : 'UNKNOWN', motorOn ? (tel.en ? 'c-grn' : 'c-org') : 'c-mut');
-  $('motion').textContent = motorOn ? (tel.stall ? 'STALLED' : MOTION[tel.run] || '—') : 'NO LINK';
+  setStatus($('wifi'), isLive ? 'CONNECTED' : wsState === 'closed' ? 'LOST' : 'RECONNECTING',
+            isLive ? 'c-grn' : wsState === 'closed' ? 'c-red' : 'c-org');
+  setStatus($('can'), !isLive ? 'UNKNOWN' : tel.on ? 'OK' : 'NO RESPONSE', !isLive ? 'c-mut' : tel.on ? 'c-grn' : 'c-red');
+  setStatus($('motor'), on ? (tel.en ? 'ENABLED' : 'DISABLED') : 'UNKNOWN', on ? (tel.en ? 'c-grn' : 'c-org') : 'c-mut');
+  $('motion').textContent = !on ? 'NO LINK' : tel.es ? 'E-STOP' : tel.stall ? 'STALLED' : tel.jog ? 'JOGGING' : MOTION[tel.run] || '—';
 
-  const fault = motorOn && tel.stall ? 'STALL' : motorOn && ALARM[tel.alm] ? ALARM[tel.alm] : motorOn && tel.mode >= 0 && tel.mode !== 5 ? 'MODE' : '';
+  const fault = !on ? '' : tel.es ? 'E-STOP' : tel.stall ? 'STALL' : ALARM[tel.alm] || (tel.mode >= 0 && tel.mode !== 5 ? 'MODE' : '');
   $('fault').hidden = !fault; $('fault').textContent = '! ' + fault;
+  const es = tel && tel.es;
+  $('estop').textContent = es ? 'RELEASE E-STOP' : 'E-STOP';
+  $('estop').classList.toggle('latched', !!es);
 
-  $('offlineBanner').hidden = motorOn;
-  $('offlineText').textContent = !live ? 'NO CONNECTION TO THE ESP32 · READOUTS ARE STALE' : 'MOTOR NOT RESPONDING ON CAN · CHECK MOTOR POWER';
-  $('modeBanner').hidden = !(motorOn && tel.mode >= 0 && tel.mode !== 5);
-  if (motorOn) $('modeText').textContent = 'MOTOR REPORTS ' + (MODES[tel.mode] || 'MODE ' + tel.mode) + ' · REQUIRED: BUS CLOSED-LOOP FOC';
-  $('stallBanner').hidden = !(motorOn && tel.stall);
-  $('zeroBanner').hidden = !motorOn;
+  $('offlineBanner').hidden = on;
+  $('offlineText').textContent = !isLive ? 'NO CONNECTION TO THE ESP32 · READOUTS ARE STALE · CONTROLS LOCKED' : 'MOTOR NOT RESPONDING ON CAN · CHECK MOTOR POWER';
+  $('estopBanner').hidden = !(on && tel.es);
+  $('modeBanner').hidden = !(on && tel.mode >= 0 && tel.mode !== 5);
+  if (on) $('modeText').textContent = 'MOTOR REPORTS ' + (MODES[tel.mode] || 'MODE ' + tel.mode) + ' · REQUIRED: BUS CLOSED-LOOP FOC · MOTION BLOCKED';
+  $('stallBanner').hidden = !(on && tel.stall);
+  $('zeroBanner').hidden = !(on && !tel.z);
 
-  $('readout').style.opacity = motorOn ? 1 : 0.4;
+  // controls
+  $('btnEnable').disabled = !on || tel.en; $('btnEnable').classList.toggle('on', on && tel.en);
+  $('btnDisable').disabled = !on || !tel.en; $('btnDisable').classList.toggle('on', on && !tel.en);
+  $('btnStop').disabled = !on;
+  ['jogMinus', 'jogPlus'].forEach(id => { if (!jogDir) $(id).disabled = !move; });
+  if (jogDir && !move) jogEnd();
+  ['stepMinus', 'stepPlus', 'btnGo', 'btnGoZero'].forEach(id => $(id).disabled = !move);
+  $('btnSetZero').disabled = !on || tel.jog || tel.tgt !== null;
+
+  $('readout').style.opacity = on ? 1 : 0.4;
   if (tel) {
     $('angle').textContent = tel.pos.toFixed(2);
     $('speed').textContent = tel.spd.toFixed(2);
     $('err').textContent = tel.err.toFixed(3);
     $('err').className = 'mid ' + (Math.abs(tel.err) > 1.5 ? 'c-red' : Math.abs(tel.err) > 0.5 ? 'c-org' : '');
-    $('homed').textContent = tel.homed ? 'HOMED' : 'NOT HOMED';
-    $('homed').className = tel.homed ? 'c-grn' : 'c-mut';
-    document.querySelectorAll('#alarms span').forEach(s => s.classList.toggle('on', motorOn && tel.alm === +s.dataset.a));
+    if (tel.tgt !== lastTarget) { lastTarget = tel.tgt; moveStart = tel.pos; }
+    $('target').textContent = tel.tgt === null ? '----' : tel.tgt.toFixed(2) + ' DEG';
+    $('progress').style.width = tel.tgt === null ? '0' :
+      Math.max(0, Math.min(100, 100 - Math.abs(tel.tgt - tel.pos) / Math.max(0.01, Math.abs(tel.tgt - moveStart)) * 100)) + '%';
+    $('zero').textContent = tel.z ? 'SET' : 'NOT ZEROED'; $('zero').className = tel.z ? 'c-grn' : 'c-org';
+    $('homed').textContent = tel.homed ? 'HOMED' : 'NOT HOMED'; $('homed').className = tel.homed ? 'c-grn' : 'c-mut';
+    document.querySelectorAll('#alarms span').forEach(s => s.classList.toggle('on', on && tel.alm === +s.dataset.a));
     $('modeLabel').textContent = tel.mode >= 0 ? (MODES[tel.mode] || 'MODE ' + tel.mode) : '—';
     $('modeLabel').className = tel.mode === 5 ? 'c-grn' : 'c-red';
     $('fw').textContent = tel.fw || '—';
@@ -340,9 +510,9 @@ function render() {
     $('rx').textContent = tel.rx;
     $('gear').textContent = $('gear2').textContent = +tel.gear.toFixed(3);
   }
-  $('wsLabel').textContent = 'WS ' + (live ? 'OPEN ' + rate + 'HZ' : wsState === 'closed' ? 'CLOSED' : 'CONNECTING');
+  $('wsLabel').textContent = 'WS ' + (isLive ? 'OPEN ' + rate + 'HZ' : wsState === 'closed' ? 'CLOSED' : 'CONNECTING');
   $('rate').textContent = 'WS ' + rate + ' HZ';
-  draw(!motorOn);
+  draw(!on);
   requestAnimationFrame(render);
 }
 
@@ -365,8 +535,8 @@ function draw(stale) {
   const px = i => Math.round(((i + off) / (HIST - 1)) * W / 3) * 3;
   const py = v => Math.round((H / 2 - (Math.max(-half, Math.min(half, v)) / half) * (H / 2 - 8)) / 3) * 3;
   g.globalAlpha = stale ? 0.3 : 1;
-  g.fillStyle = INK; hist.forEach(([a], i) => g.fillRect(px(i), py(a - mid), 3, 3));
   g.fillStyle = ORG; hist.forEach(([, e], i) => g.fillRect(px(i), py(e * 20), 3, 3));
+  g.fillStyle = INK; hist.forEach(([a], i) => g.fillRect(px(i), py(a - mid), 3, 3));  // angle on top
   g.globalAlpha = 1;
 }
 

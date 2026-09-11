@@ -1,6 +1,6 @@
 // SERVO42ES controller firmware (ESP32-S3).
-// Step 1: joins the home WiFi as servo-control.local, polls the motor over CAN
-// and serves a status page. Read-only: sends no motion or configuration commands.
+// Joins the home WiFi as servo-control.local, polls the motor over CAN and serves
+// the control UI. Motion commands come from the browser over a WebSocket (control.cpp).
 //
 // Before building: copy secrets.h.example to secrets.h and fill in your WiFi details.
 // Board settings (Arduino IDE): ESP32S3 Dev Module, Flash Size 16MB,
@@ -11,6 +11,7 @@
 #include <ESPmDNS.h>
 #include "config.h"
 #include "can_bus.h"
+#include "control.h"
 #include "servo.h"
 #include "web.h"
 
@@ -31,6 +32,7 @@ void setup() {
 
   if (!can_bus::begin()) Serial.println("CAN: TWAI driver failed to start");
   servo::begin();
+  control::begin();
 
   WiFi.mode(WIFI_STA);
   // Also answer IPv6 (AAAA) mDNS queries. Without it, macOS waits ~5 s for an
@@ -46,6 +48,7 @@ void setup() {
 
 void loop() {
   servo::update();
+  control::update();
 
   if (millis() - lastTelemetryMs >= TELEMETRY_INTERVAL_MS) {
     lastTelemetryMs = millis();

@@ -1,0 +1,36 @@
+#pragma once
+#include <stdint.h>
+#include "driver/twai.h"
+
+// Motion and safety logic. Commands arrive from the web server task and are
+// queued; update() executes them in the main loop, so all CAN writes happen there.
+namespace control {
+
+enum class Cmd : uint8_t { Enable, Disable, Stop, EStop, Release, Jog, Step, Goto, Zero, ClearStall, ClientGone };
+
+struct Command {
+  Cmd type;
+  int8_t dir = 0;     // Jog: -1, 0 (release), +1
+  float deg = 0;      // Step: relative joint degrees; Goto: absolute joint degrees
+  float speed = 0;    // joint deg/s
+  float accel = 0;    // joint deg/s^2
+};
+
+struct Status {
+  bool estop = false;      // latched until Release
+  bool zeroed = false;     // 92H succeeded since the motor last powered up
+  bool jogging = false;
+  bool hasTarget = false;
+  float targetDeg = 0;
+};
+
+void begin();
+bool enqueue(const Command &cmd);  // safe from any task
+void update();                     // call from loop()
+Status status();                   // safe from any task
+
+// Called by servo.cpp from the main loop.
+void onReply(const twai_message_t &msg);
+void onMotorOnline();
+
+}  // namespace control

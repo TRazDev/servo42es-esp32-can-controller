@@ -36,7 +36,10 @@ Newest first. The top entry should always describe the current state.
   - The user confirmed the step 1 page in the browser.
   - **Step 2a done:** the design/ UI ported to plain HTML/CSS/JS (`ui/index.html`, 22 KB → 6.7 KB gzipped via `tools/build_ui.py`), served at `/`. The `/ws` WebSocket pushes telemetry at 20 Hz (measured 20.3 Hz). Position is polled at 50 Hz and other values every ~140 ms (~100 CAN requests/s). Live: header status, readouts, 10 s trace, alarms, homed flag, device info, mode banner. **All controls are shown but disabled.** Gear ratio is fixed at 1 (config.h) until 2c.
   - Build: `arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB,CDCOnBoot=default" firmware/servo_controller`. Upload port: `/dev/cu.usbmodem5C831103731` (COM USB-C).
-  - Next: the user checks the UI in the browser. Then step 2b: controls (enable/disable, stop, E-STOP hold, jog with deadman, step, go-to, set zero). Then 2c: settings (gear ratio in NVS, motor params).
+  - The user confirmed the 2a UI looks right (screenshot).
+  - **Step 2b written and uploaded:** control.cpp (command queue, safety checks, jog deadman, E-STOP latch, zero tracking, heartbeat 89H) + WebSocket commands + a UI with working controls, toasts and confirmations (D-013). E-STOP/Release tested over the WebSocket on the motor at rest: latch works, the motor stays enabled.
+  - Not yet tested: jog, step, go-to, set zero, smooth stop, stall clear. **F6 jog direction bit is UNVERIFIED** (config.h `F6_DIR_BIT_POSITIVE`); jog ▶▶ should make the angle go up.
+  - Next: the user tests the controls in the UI. Then 2c: settings (gear ratio in NVS, motor params).
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md
