@@ -12,19 +12,24 @@
 From manual p.7, saved as `references/servo42es-connector-pinout.png`. The manual's board photo is labelled "42ES BUS", i.e. the CAN version.
 **UNVERIFIED:** which row is which, and which end is pin 1. Check with a multimeter before applying power (e.g. continuity to the GND pins, or check the supplied cable).
 
-| Row (manual drawing, top = the end nearest the motor terminal) | Left column | Right column |
-|---|---|---|
-| 1 | VIN (20–48 V) | VIN (20–48 V) |
-| 2 | GND | GND |
-| 3 | ALM− | ALM+ |
-| 4 | PEND− | PEND+ |
-| 5 | IN− | IN+ |
-| 6 | CAN L | CAN H |
-| 7 | CAN L | CAN H |
-| 8 | RS485 B | RS485 A |
-| 9 | RS485 B | RS485 A |
-| 10 | 5V out (100 mA) | GND |
-| 11 | SWCLK | SWDIO/RESET |
+| Row (top = end nearest the blue motor terminal) | Column A: row 10 wire is **red** | Wire | Column B: row 10 wire is **black** | Wire |
+|---|---|---|---|---|
+| 1 | VIN (20–48 V) | red | VIN (20–48 V) | red |
+| 2 | GND | black | GND | black |
+| 3 | ALM− | yellow | ALM+ | yellow |
+| 4 | PEND− | green | PEND+ | green |
+| 5 | IN− | blue | IN+ | blue |
+| 6 | **CAN L** | purple | **CAN H** | purple |
+| 7 | **CAN L** | brown | **CAN H** | brown |
+| 8 | RS485 B | grey | RS485 A | grey |
+| 9 | RS485 B | white | RS485 A | white |
+| 10 | **5V out** (100 mA) | **red** | GND | black |
+| 11 | SWCLK | orange | SWDIO/RESET | orange |
+
+Wire colours come from the user's photos of the supplied cable (2026-09-11). Both rows use the same colour sequence, except row 10: red on one side, black on the other. That matches the manual's 5V/GND difference in row 10, which also confirms the orientation (row 1 at the motor-terminal end). The colours in the manual drawing are only label colours, not wire colours.
+- Column A = the manual's left column (5V side). Column B = the right column (GND side).
+- **Danger:** there are 3 red wires. Two are VIN (row 1). The third, red in row 10 of column A, is the **5V output**. Never connect 24 V to it.
+- Each colour appears twice among the loose ends, so the ends must be traced back to their row before use. Unused ends (ALM, PEND, IN, RS485, SWD, 5V) should be insulated.
 
 Notes:
 - The two CAN pairs are connected in parallel, so either one works; the other can continue the bus to the next motor.
@@ -54,9 +59,11 @@ These are general ESP32-S3 facts. Check them against the actual board's pinout.
 | ESP32 GPIO 5 (TWAI RX), proposed | Module RX | Pin choice not confirmed yet |
 | ESP32 3V3 | Module 3.3V | |
 | ESP32 GND | Module GND | Also a common ground with the motor's GND (manual) |
-| Module CANH | SERVO42ES CAN H (connector row 6 or 7) | twisted pair |
-| Module CANL | SERVO42ES CAN L (connector row 6 or 7) | twisted pair |
-| PSU +24 V / GND | SERVO42ES VIN / GND (rows 1–2) | |
+| Module CANH | Cable purple, column B (CAN H) | twisted with CANL |
+| Module CANL | Cable purple, column A (CAN L) | twisted with CANH |
+| Module GND / ESP32 GND | Cable black, row 2 (GND) | common ground |
+| PSU +24 V | Both row-1 reds (VIN) | not the row-10 red, which is the 5V output |
+| PSU GND | Row-2 black (GND) | |
 
 ## Bus settings
 - Bitrate: 500K is the factory default (manual). Options are 125K/250K/500K/1M.
