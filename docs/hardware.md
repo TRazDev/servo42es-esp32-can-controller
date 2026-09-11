@@ -95,5 +95,6 @@ Diagram with every pin in its real position: `docs/images/wiring.svg`. The modul
 - Driver supply range: **20–48 V** (manual). Below 20 V it won't run properly and raises an undervoltage alarm (status 5).
 - SERVO42ES phase current: 0–3000 mA, default 1600 mA (set with command 83H)
 - Chosen supply voltage: **24 V** (D-002)
-- Current limit on the PSU: TBD
+- Current limit on the PSU: **1.5 A is too low** (VERIFIED 2026-09-11). With the shaft blocked (run current 1600 mA), the PSU went into current limit (CC) and the voltage collapsed to about 8 V. The driver browned out and restarted, and its position counter reset. Use **about 3 A** for one motor.
+- For the 6-motor arm: size the 24 V supply for the stall/acceleration peaks of all joints at once (several amps per motor), not the average draw.
 - Don't plug or unplug the power or signal cables while powered (manual §13.1).
