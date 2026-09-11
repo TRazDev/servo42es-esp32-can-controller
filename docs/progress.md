@@ -26,7 +26,7 @@ Newest first. The top entry should always describe the current state.
   - D-011: http://servo-control.local, no login
 - **Wiring (in progress):** the user sent photos of the ESP32 board, the CAN module and the motor. The CAN module has a 120 Ω terminator. Put the motor's 2×11 connector pinout (manual p.7) in hardware.md; which row is which is still unverified.
 - **Next:**
-  1. Wire it up: check whether the user has a cable for the motor's 2×11 connector, confirm the CAN pins (GPIO 4/5 proposed), check termination and connector orientation with a multimeter, set the PSU current limit
+  1. Wire it up. Cable mapped and labelled, multimeter checks passed (hardware.md → Measurements). Next: connect ESP32 ↔ module ↔ motor (no power yet), then set the PSU (24 V, ~1.5 A limit) and power up
   2. First milestone: send one CAN command and read back a response
   3. Port the UI and wire it to the firmware
 - **Open questions:** CAN bus termination, PSU current limit, and the hardware checks listed in gui.md and protocol.md

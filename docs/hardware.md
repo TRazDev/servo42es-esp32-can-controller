@@ -34,7 +34,17 @@ Wire colours come from the user's photos of the supplied cable (2026-09-11). Bot
 Notes:
 - The two CAN pairs are connected in parallel, so either one works; the other can continue the bus to the next motor.
 - The two VIN pins are paired, as are the two GND pins.
-- The motor's own CAN termination isn't documented. Check it by measuring CAN H–CAN L with power off: about 120 Ω means it has termination; open means it doesn't.
+- The motor's own CAN termination isn't documented. Measured: it has none (see below).
+
+## Measurements (VERIFIED 2026-09-11, power off, cable plugged into motor)
+The user labelled the loose ends: 24V+, 24V−, CAN H, CAN L.
+| Test | Result | Meaning |
+|---|---|---|
+| 24V+ ↔ other row-1 red, continuity | beep | the 24V+ label is on a VIN wire |
+| 24V+ ↔ 24V−, Ω | climbs from 0 through 60k, 120k, then over range | capacitor charging, no short |
+| CAN H ↔ brown on the same side, continuity | beep | CAN rows 6/7 are paralleled, so the H label is on the right side |
+| CAN H ↔ CAN L, Ω | ~30 kΩ, no beep | **no termination resistor in the motor**; a proper pair, not shorted |
+Meter note: this meter shows over-range as something that reads like "0". A real short beeps.
 
 ## MCU notes (ESP32-S3 N16R8)
 These are general ESP32-S3 facts. Check them against the actual board's pinout.
@@ -67,7 +77,10 @@ These are general ESP32-S3 facts. Check them against the actual board's pinout.
 
 ## Bus settings
 - Bitrate: 500K is the factory default (manual). Options are 125K/250K/500K/1M.
-- Termination: 120 Ω at each end of the bus. Check whether the module and driver already have it.
+- Termination: the correct setup is 120 Ω at each end of the bus.
+  - The CAN module has one (120R, with a jumper). The motor has none (measured ~30 kΩ between H and L).
+  - For the short bench link (<1 m), the module's terminator alone is enough.
+  - For the arm (longer bus, 6 motors), add a 120 Ω resistor at the far end. Easiest spot: across the spare brown pair on the last motor, since those wires are the same CAN H/L lines.
 - Motor CAN ID: 01 is the factory default (manual)
 - The driver's onboard CAN transceiver is a TJA1051T. It has two parallel CAN connectors, and either one works.
 - The manual says the host and motor must share a common ground, and recommends shielded twisted pair.
