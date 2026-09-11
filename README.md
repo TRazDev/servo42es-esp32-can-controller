@@ -29,15 +29,15 @@ The UI works in joint degrees. You set the gearbox ratio and the firmware conver
 
 | From | To |
 |---|---|
-| ESP32 3V3 | CAN module 3.3V |
-| ESP32 GND | CAN module GND |
-| ESP32 GPIO 4 | CAN module TX |
-| ESP32 GPIO 5 | CAN module RX |
-| CAN module CANH | Motor cable CAN H (purple, side B) |
-| CAN module CANL | Motor cable CAN L (purple, side A) |
-| ESP32 GND (second pin) | Motor cable GND (any spare black) |
-| PSU + (24 V) | Motor cable 24V+ (red, row 1) |
-| PSU − | Motor cable 24V− (black, row 2) |
+| ESP32 3V3 (left header, 2nd pin) | CAN module 3.3V |
+| ESP32 GND (left header, bottom pin) | CAN module GND |
+| ESP32 GPIO 4 (left header) | CAN module TX |
+| ESP32 GPIO 5 (left header) | CAN module RX |
+| CAN module CANH | Motor cable CAN H (purple, side B, row 6) |
+| CAN module CANL | Motor cable CAN L (purple, side A, row 6) |
+| ESP32 GND (right header, bottom pin) | Motor cable GND (black, side B, row 10; any black works) |
+| PSU + (24 V) | Motor cable VIN (red, row 1; either side) |
+| PSU − | Motor cable GND (black, row 2) |
 
 The motor's cable has 22 wires, and most colours appear twice, once per connector row. Side A is the row whose 10th wire is red; side B is the row whose 10th wire is black.
 

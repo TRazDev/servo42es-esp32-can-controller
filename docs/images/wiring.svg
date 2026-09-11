@@ -1,110 +1,273 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 745" width="1200" height="745" font-family="Helvetica, Arial, sans-serif">
-  <rect width="1200" height="745" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 1010" width="1360" height="1010" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1360" height="1010" fill="#ffffff"/>
 
   <!-- Title -->
-  <text x="40" y="58" font-size="24" font-weight="700" fill="#111">Wiring: ESP32-S3 → SN65HVD230 → MKS SERVO42ES</text>
-  <text x="40" y="86" font-size="14" fill="#555">Bench setup, one motor. Wire everything with the power off.</text>
+  <text x="40" y="44" font-size="24" font-weight="700" fill="#111">Wiring: MKS SERVO42ES → SN65HVD230 → ESP32-S3</text>
+  <text x="40" y="70" font-size="13.5" fill="#555">Real pin positions. Motor seen from the back (label side), ESP32 from the component side. Gold ring = used pin.</text>
 
-  <!-- ===== Wires (drawn first, under the blocks) ===== -->
+  <!-- ================= WIRES (under everything) ================= -->
   <g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <!-- ESP32 to CAN module -->
-    <path d="M290 200 H440" stroke="#d62728"/>
-    <path d="M290 250 H440" stroke="#222222"/>
-    <path d="M290 300 H440" stroke="#2ca02c"/>
-    <path d="M290 350 H440" stroke="#1f77b4"/>
-    <!-- CAN bus -->
-    <path d="M640 240 H830" stroke="#7e3fb8"/>
-    <path d="M640 290 H830" stroke="#b28ad9"/>
-    <!-- Common ground ESP32 to motor -->
-    <path d="M290 450 H760 V340 H830" stroke="#222222"/>
-    <!-- Power -->
-    <path d="M780 600 V390 H830" stroke="#d62728"/>
-    <path d="M810 600 V440 H830" stroke="#222222"/>
+    <!-- Power: motor side B row 1 / row 2 to PSU -->
+    <path d="M334 270 H530 V180" stroke="#d62728"/>
+    <path d="M334 310 H560 V180" stroke="#222222"/>
+    <!-- CAN -->
+    <path d="M302 470 V448 H610 V320 H680" stroke="#b28ad9"/>
+    <path d="M334 470 H640 V360 H680" stroke="#7e3fb8"/>
+    <!-- Module header to ESP32 left header -->
+    <path d="M860 298 H1060" stroke="#1f77b4"/>
+    <path d="M860 324 H1060" stroke="#2ca02c"/>
+    <path d="M860 350 H980 V766 H1060" stroke="#222222"/>
+    <path d="M860 376 H900 V356 A6 6 0 0 0 900 344 V330 A6 6 0 0 0 900 318 V304 A6 6 0 0 0 900 292 V246 H1060" stroke="#d62728"/>
+    <!-- Common ground: motor side B row 10 to ESP32 right-bottom GND -->
+    <path d="M334 630 H600 V885 H1305 V766 H1260" stroke="#222222"/>
   </g>
-  <text x="735" y="270" font-size="12" font-style="italic" fill="#7e3fb8" text-anchor="middle">twist together</text>
-
-  <!-- ===== ESP32-S3 ===== -->
-  <rect x="40" y="140" width="250" height="400" rx="10" fill="#1b1b1b"/>
-  <text x="60" y="166" font-size="20" font-weight="700" fill="#fff">ESP32-S3</text>
-  <text x="60" y="185" font-size="13" fill="#b5b5b5">N16R8 dev board</text>
-  <g font-size="14" fill="#fff">
-    <text x="150" y="205">3V3</text>
-    <text x="150" y="255">GND</text>
-    <text x="150" y="305">GPIO 5 · CAN RX</text>
-    <text x="150" y="355">GPIO 4 · CAN TX</text>
-    <text x="150" y="455">GND</text>
-  </g>
-  <g fill="#d4af37">
-    <circle cx="290" cy="200" r="6"/><circle cx="290" cy="250" r="6"/>
-    <circle cx="290" cy="300" r="6"/><circle cx="290" cy="350" r="6"/>
-    <circle cx="290" cy="450" r="6"/>
-  </g>
-  <!-- USB -->
-  <rect x="140" y="528" width="50" height="22" rx="5" fill="#9a9a9a" stroke="#1b1b1b" stroke-width="2"/>
-  <text x="165" y="578" font-size="13" fill="#333" text-anchor="middle">USB-C → computer (power + programming)</text>
-
-  <!-- ===== SN65HVD230 module ===== -->
-  <rect x="440" y="170" width="200" height="210" rx="8" fill="#1f5fa8"/>
-  <g font-size="14" fill="#fff">
-    <text x="452" y="205">3.3V</text>
-    <text x="452" y="255">GND</text>
-    <text x="452" y="305">RX</text>
-    <text x="452" y="355">TX</text>
-  </g>
-  <g font-size="14" fill="#fff">
-    <text x="580" y="245">CANH</text>
-    <text x="580" y="295">CANL</text>
-  </g>
-  <text x="560" y="332" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">SN65HVD230</text>
-  <text x="560" y="350" font-size="12" fill="#d6e4f5" text-anchor="middle">CAN module</text>
-  <text x="560" y="368" font-size="12" fill="#d6e4f5" text-anchor="middle">120 Ω jumper ON</text>
-  <g fill="#d4af37">
-    <circle cx="440" cy="200" r="6"/><circle cx="440" cy="250" r="6"/>
-    <circle cx="440" cy="300" r="6"/><circle cx="440" cy="350" r="6"/>
-    <circle cx="640" cy="240" r="6"/><circle cx="640" cy="290" r="6"/>
+  <g font-size="11" fill="#555" font-style="italic">
+    <text x="470" y="492">CAN H / CAN L: twist together</text>
+    <text x="992" y="292">CAN TX</text>
+    <text x="992" y="318">CAN RX</text>
   </g>
 
-  <!-- ===== Motor cable ends ===== -->
-  <g stroke-width="6" stroke-linecap="round">
-    <line x1="830" y1="240" x2="920" y2="240" stroke="#7e3fb8"/>
-    <line x1="830" y1="290" x2="920" y2="290" stroke="#7e3fb8"/>
-    <line x1="830" y1="340" x2="920" y2="340" stroke="#222222"/>
-    <line x1="830" y1="390" x2="920" y2="390" stroke="#d62728"/>
-    <line x1="830" y1="440" x2="920" y2="440" stroke="#222222"/>
-    <line x1="850" y1="490" x2="920" y2="490" stroke="#d62728" stroke-dasharray="8 6"/>
-    <line x1="850" y1="530" x2="920" y2="530" stroke="#9a9a9a" stroke-dasharray="8 6"/>
+  <!-- ================= LAB PSU ================= -->
+  <rect x="455" y="92" width="210" height="88" rx="8" fill="#f2f2f2" stroke="#999" stroke-width="1.5"/>
+  <text x="470" y="118" font-size="15" font-weight="700" fill="#111">Lab power supply</text>
+  <text x="470" y="138" font-size="12.5" fill="#444">24 V · current limit 1.5 A</text>
+  <text x="530" y="168" font-size="15" font-weight="700" fill="#d62728" text-anchor="middle">+</text>
+  <text x="560" y="168" font-size="15" font-weight="700" fill="#222" text-anchor="middle">−</text>
+  <g fill="#d4af37" stroke="#7a5f10" stroke-width="1.5"><circle cx="530" cy="180" r="6"/><circle cx="560" cy="180" r="6"/></g>
+
+  <!-- ================= MKS SERVO42ES (back view) ================= -->
+  <rect x="40" y="150" width="278" height="560" rx="12" fill="#1b1b1b"/>
+  <!-- motor phase terminal -->
+  <rect x="120" y="128" width="110" height="36" rx="4" fill="#2e8fd6"/>
+  <g fill="#cfd8dc" stroke="#555" stroke-width="1"><circle cx="138" cy="146" r="7"/><circle cx="163" cy="146" r="7"/><circle cx="188" cy="146" r="7"/><circle cx="213" cy="146" r="7"/></g>
+  <text x="175" y="184" font-size="11" fill="#9fb8cc" text-anchor="middle">motor phases (factory wired)</text>
+  <text x="60" y="214" font-size="17" font-weight="700" fill="#fff">MKS SERVO42ES</text>
+  <text x="60" y="234" font-size="11.5" fill="#b5b5b5">back view · 2×11 connector</text>
+
+  <!-- connector housing -->
+  <rect x="286" y="248" width="64" height="444" rx="4" fill="#f4efe6" stroke="#b9b2a5" stroke-width="1.5"/>
+  <text x="302" y="262" font-size="9" fill="#8a8272" text-anchor="middle">A</text>
+  <text x="334" y="262" font-size="9" fill="#8a8272" text-anchor="middle">B</text>
+
+  <!-- pins: fill = wire colour in the supplied cable -->
+  <g stroke="#555" stroke-width="1">
+    <!-- side A (inner column) -->
+    <circle cx="302" cy="270" r="7" fill="#d62728"/>
+    <circle cx="302" cy="310" r="7" fill="#222"/>
+    <circle cx="302" cy="350" r="7" fill="#f2c500"/>
+    <circle cx="302" cy="390" r="7" fill="#1a9a5a"/>
+    <circle cx="302" cy="430" r="7" fill="#1f4fbf"/>
+    <circle cx="302" cy="470" r="7" fill="#7e3fb8"/>
+    <circle cx="302" cy="510" r="7" fill="#7a4a2a"/>
+    <circle cx="302" cy="550" r="7" fill="#9a9a9a"/>
+    <circle cx="302" cy="590" r="7" fill="#ffffff"/>
+    <circle cx="302" cy="630" r="7" fill="#d62728"/>
+    <circle cx="302" cy="670" r="7" fill="#f07a2a"/>
+    <!-- side B (outer column) -->
+    <circle cx="334" cy="270" r="7" fill="#d62728"/>
+    <circle cx="334" cy="310" r="7" fill="#222"/>
+    <circle cx="334" cy="350" r="7" fill="#f2c500"/>
+    <circle cx="334" cy="390" r="7" fill="#1a9a5a"/>
+    <circle cx="334" cy="430" r="7" fill="#1f4fbf"/>
+    <circle cx="334" cy="470" r="7" fill="#7e3fb8"/>
+    <circle cx="334" cy="510" r="7" fill="#7a4a2a"/>
+    <circle cx="334" cy="550" r="7" fill="#9a9a9a"/>
+    <circle cx="334" cy="590" r="7" fill="#ffffff"/>
+    <circle cx="334" cy="630" r="7" fill="#222"/>
+    <circle cx="334" cy="670" r="7" fill="#f07a2a"/>
   </g>
-  <text x="838" y="496" font-size="18" font-weight="700" fill="#d62728" text-anchor="middle">✕</text>
-  <text x="838" y="536" font-size="18" font-weight="700" fill="#9a9a9a" text-anchor="middle">✕</text>
+  <!-- used-pin rings -->
+  <g fill="none" stroke="#d4af37" stroke-width="3">
+    <circle cx="334" cy="270" r="10"/><circle cx="334" cy="310" r="10"/>
+    <circle cx="302" cy="470" r="10"/><circle cx="334" cy="470" r="10"/>
+    <circle cx="334" cy="630" r="10"/>
+  </g>
+  <!-- 5V output: do not connect -->
+  <circle cx="302" cy="630" r="10" fill="none" stroke="#ff4d3a" stroke-width="3"/>
+  <path d="M295 623 L309 637 M309 623 L295 637" stroke="#fff" stroke-width="2.5"/>
 
-  <!-- ===== MKS SERVO42ES ===== -->
-  <rect x="920" y="150" width="250" height="410" rx="10" fill="#1b1b1b"/>
-  <text x="1045" y="184" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">MKS SERVO42ES</text>
-  <text x="1045" y="204" font-size="12" fill="#b5b5b5" text-anchor="middle">supplied 2×11 cable, loose ends</text>
-  <g font-size="12.5" fill="#fff">
-    <text x="934" y="244">CAN H · purple, side B</text>
-    <text x="934" y="294">CAN L · purple, side A</text>
-    <text x="934" y="344">GND · any spare black</text>
-    <text x="934" y="394">24V+ · red, row 1 (VIN)</text>
-    <text x="934" y="444">24V− · black, row 2 (GND)</text>
-    <text x="934" y="494" fill="#ff7a6b" font-weight="700">5V OUT · DO NOT CONNECT</text>
-    <text x="934" y="534" fill="#b5b5b5">all other wires · unused, insulate</text>
+  <!-- side A labels (left of connector, on the housing) -->
+  <g font-size="11.5" fill="#cfcfcf" text-anchor="end">
+    <text x="280" y="274">VIN · red</text>
+    <text x="280" y="314">GND · black</text>
+    <text x="280" y="354">ALM− · yellow</text>
+    <text x="280" y="394">PEND− · green</text>
+    <text x="280" y="434">IN− · blue</text>
+    <text x="280" y="474" fill="#e8c65a" font-weight="700">CAN L · purple</text>
+    <text x="280" y="514">CAN L · brown</text>
+    <text x="280" y="554">RS485 B · grey</text>
+    <text x="280" y="594">RS485 B · white</text>
+    <text x="280" y="634" fill="#ff7a6b" font-weight="700">5V OUT · red · DON'T USE</text>
+    <text x="280" y="674">SWCLK · orange</text>
+  </g>
+  <!-- side B labels (right of connector) -->
+  <g font-size="11.5" fill="#666">
+    <text x="360" y="264" fill="#111" font-weight="700">VIN · red → PSU +</text>
+    <text x="360" y="304" fill="#111" font-weight="700">GND · black → PSU −</text>
+    <text x="360" y="354">ALM+ · yellow</text>
+    <text x="360" y="394">PEND+ · green</text>
+    <text x="360" y="434">IN+ · blue</text>
+    <text x="360" y="464" fill="#111" font-weight="700">CAN H · purple</text>
+    <text x="360" y="514">CAN H · brown</text>
+    <text x="360" y="554">RS485 A · grey</text>
+    <text x="360" y="594">RS485 A · white</text>
+    <text x="360" y="624" fill="#111" font-weight="700">GND · black → ESP32 GND</text>
+    <text x="360" y="674">SWDIO · orange</text>
   </g>
 
-  <!-- ===== Lab PSU ===== -->
-  <rect x="620" y="600" width="240" height="95" rx="8" fill="#f2f2f2" stroke="#999" stroke-width="1.5"/>
-  <text x="780" y="626" font-size="16" font-weight="700" fill="#d62728" text-anchor="middle">+</text>
-  <text x="810" y="626" font-size="16" font-weight="700" fill="#222" text-anchor="middle">−</text>
-  <g fill="#d4af37"><circle cx="780" cy="600" r="6"/><circle cx="810" cy="600" r="6"/></g>
-  <text x="636" y="656" font-size="16" font-weight="700" fill="#111">Lab power supply</text>
-  <text x="636" y="678" font-size="13" fill="#444">24 V · current limit 1.5 A</text>
+  <!-- ================= SN65HVD230 MODULE (turned 180°) ================= -->
+  <text x="770" y="238" font-size="13" font-weight="700" fill="#111" text-anchor="middle">SN65HVD230 module</text>
+  <rect x="680" y="250" width="180" height="170" rx="8" fill="#1f5fa8"/>
+  <!-- screw terminal -->
+  <rect x="664" y="298" width="30" height="84" rx="3" fill="#2e8fd6" stroke="#1a4f86"/>
+  <!-- chip -->
+  <rect x="742" y="304" width="56" height="44" rx="3" fill="#161616"/>
+  <text x="770" y="330" font-size="10" fill="#ddd" text-anchor="middle">VP230</text>
+  <!-- 120R + jumper -->
+  <rect x="752" y="366" width="22" height="10" fill="#222"/>
+  <rect x="780" y="362" width="12" height="18" rx="2" fill="#f2c500"/>
+  <text x="770" y="404" font-size="11" fill="#d6e4f5" text-anchor="middle">120 Ω · jumper ON</text>
+  <g font-size="12" fill="#fff">
+    <text x="702" y="324">CANL</text>
+    <text x="702" y="364">CANH</text>
+  </g>
+  <g font-size="12" fill="#fff" text-anchor="end">
+    <text x="850" y="302">TX</text>
+    <text x="850" y="328">RX</text>
+    <text x="850" y="354">GND</text>
+    <text x="850" y="380">3.3V</text>
+  </g>
+  <g fill="#d4af37" stroke="#7a5f10" stroke-width="1.5">
+    <circle cx="680" cy="320" r="6"/><circle cx="680" cy="360" r="6"/>
+    <circle cx="860" cy="298" r="6"/><circle cx="860" cy="324" r="6"/>
+    <circle cx="860" cy="350" r="6"/><circle cx="860" cy="376" r="6"/>
+  </g>
+  <text x="770" y="440" font-size="11" fill="#666" text-anchor="middle">turned 180° so both sides face their wires</text>
 
-  <!-- ===== Notes ===== -->
+  <!-- ================= ESP32-S3 DEV BOARD ================= -->
+  <rect x="1040" y="112" width="240" height="728" rx="10" fill="#141414"/>
+  <!-- antenna -->
+  <rect x="1100" y="98" width="120" height="44" rx="3" fill="#222"/>
+  <path d="M1110 130 V110 H1125 V130 H1140 V110 H1155 V130 H1170 V110 H1185 V130 H1200 V110 H1210" fill="none" stroke="#555" stroke-width="2"/>
+  <!-- module can -->
+  <rect x="1104" y="150" width="112" height="210" rx="4" fill="#b8bcc2"/>
+  <text x="1160" y="232" font-size="13" font-weight="700" fill="#333" text-anchor="middle">ESP32-S3</text>
+  <text x="1160" y="250" font-size="11" fill="#444" text-anchor="middle">N16R8</text>
+  <!-- buttons, LED, USB chip -->
+  <rect x="1170" y="440" width="26" height="22" rx="3" fill="#888"/><text x="1160" y="456" font-size="9" fill="#bbb" text-anchor="end">RST</text>
+  <rect x="1170" y="486" width="26" height="22" rx="3" fill="#888"/><text x="1160" y="502" font-size="9" fill="#bbb" text-anchor="end">BOOT</text>
+  <rect x="1112" y="560" width="22" height="22" rx="3" fill="#eee"/><text x="1123" y="598" font-size="9" fill="#bbb" text-anchor="middle">RGB</text>
+  <rect x="1170" y="640" width="26" height="26" rx="2" fill="#2a2a2a" stroke="#555"/><text x="1183" y="682" font-size="8" fill="#999" text-anchor="middle">CH343P</text>
+  <!-- USB-C x2 -->
+  <rect x="1104" y="800" width="44" height="52" rx="8" fill="#c4c4c4" stroke="#777"/>
+  <rect x="1172" y="800" width="44" height="52" rx="8" fill="#c4c4c4" stroke="#777"/>
+  <text x="1160" y="784" font-size="10" fill="#bbb" text-anchor="middle">USB-C → computer</text>
+
+  <!-- left header pins (top to bottom) -->
+  <g stroke="#666" stroke-width="1">
+    <circle cx="1060" cy="220" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="246" r="6" fill="#d4af37"/>
+    <circle cx="1060" cy="272" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="298" r="6" fill="#d4af37"/>
+    <circle cx="1060" cy="324" r="6" fill="#d4af37"/>
+    <circle cx="1060" cy="350" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="376" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="402" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="428" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="454" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="480" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="506" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="532" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="558" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="584" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="610" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="636" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="662" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="688" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="714" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="740" r="6" fill="#6b6b6b"/>
+    <circle cx="1060" cy="766" r="6" fill="#d4af37"/>
+  </g>
+  <g font-size="11" fill="#9a9a9a">
+    <text x="1072" y="224">3V3</text>
+    <text x="1072" y="250" fill="#f0c94a" font-weight="700">3V3</text>
+    <text x="1072" y="276">RST</text>
+    <text x="1072" y="302" fill="#f0c94a" font-weight="700">4</text>
+    <text x="1072" y="328" fill="#f0c94a" font-weight="700">5</text>
+    <text x="1072" y="354">6</text>
+    <text x="1072" y="380">7</text>
+    <text x="1072" y="406">15</text>
+    <text x="1072" y="432">16</text>
+    <text x="1072" y="458">17</text>
+    <text x="1072" y="484">18</text>
+    <text x="1072" y="510">8</text>
+    <text x="1072" y="536">3</text>
+    <text x="1072" y="562">46</text>
+    <text x="1072" y="588">9</text>
+    <text x="1072" y="614">10</text>
+    <text x="1072" y="640">11</text>
+    <text x="1072" y="666">12</text>
+    <text x="1072" y="692">13</text>
+    <text x="1072" y="718">14</text>
+    <text x="1072" y="744">5V</text>
+    <text x="1072" y="770" fill="#f0c94a" font-weight="700">GND</text>
+  </g>
+
+  <!-- right header pins (top to bottom) -->
+  <g stroke="#666" stroke-width="1">
+    <circle cx="1260" cy="220" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="246" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="272" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="298" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="324" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="350" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="376" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="402" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="428" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="454" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="480" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="506" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="532" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="558" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="584" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="610" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="636" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="662" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="688" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="714" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="740" r="6" fill="#6b6b6b"/>
+    <circle cx="1260" cy="766" r="6" fill="#d4af37"/>
+  </g>
+  <g font-size="11" fill="#9a9a9a" text-anchor="end">
+    <text x="1248" y="224">GND</text>
+    <text x="1248" y="250">TX</text>
+    <text x="1248" y="276">RX</text>
+    <text x="1248" y="302">1</text>
+    <text x="1248" y="328">2</text>
+    <text x="1248" y="354">42</text>
+    <text x="1248" y="380">41</text>
+    <text x="1248" y="406">40</text>
+    <text x="1248" y="432">39</text>
+    <text x="1248" y="458">38</text>
+    <text x="1248" y="484">37</text>
+    <text x="1248" y="510">36</text>
+    <text x="1248" y="536">35</text>
+    <text x="1248" y="562">0</text>
+    <text x="1248" y="588">45</text>
+    <text x="1248" y="614">48</text>
+    <text x="1248" y="640">47</text>
+    <text x="1248" y="666">21</text>
+    <text x="1248" y="692">20</text>
+    <text x="1248" y="718">19</text>
+    <text x="1248" y="744">GND</text>
+    <text x="1248" y="770" fill="#f0c94a" font-weight="700">GND</text>
+  </g>
+
+  <!-- ================= NOTES ================= -->
   <g font-size="13" fill="#333">
-    <text x="40" y="626">• Common ground: ESP32, CAN module, motor and PSU GND are all connected.</text>
-    <text x="40" y="649">• Side A / B = the two rows of the motor connector. Row 10 is red on side A, black on side B.</text>
-    <text x="40" y="672">• Termination: 120 Ω on the module only. The motor has none; fine for a short bench cable.</text>
-    <text x="40" y="695">• The third red wire (row 10, side A) is the 5V output. Never connect it.</text>
-    <text x="40" y="718">• Connect the PSU last and switch it on only after checking the wiring.</text>
+    <text x="40" y="925">• Common ground: ESP32, CAN module, motor and PSU − are all connected.</text>
+    <text x="40" y="948">• Side A / B = the two rows of the motor connector. Row 10 is red on side A (5V output, never connect) and black on side B (GND).</text>
+    <text x="40" y="971">• Both row-1 reds are VIN and every black is GND (connected inside the driver), so either one works.</text>
+    <text x="40" y="994">• CAN module 120 Ω termination on; the motor has none. Connect the PSU last, after checking the wiring.</text>
   </g>
 </svg>

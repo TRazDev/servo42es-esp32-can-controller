@@ -65,15 +65,17 @@ These are general ESP32-S3 facts. Check them against the actual board's pinout.
 ## Wiring
 | From | To | Notes |
 |---|---|---|
-| ESP32 GPIO 4 (TWAI TX), proposed | Module TX | Pin choice not confirmed yet |
-| ESP32 GPIO 5 (TWAI RX), proposed | Module RX | Pin choice not confirmed yet |
-| ESP32 3V3 | Module 3.3V | |
-| ESP32 GND | Module GND | Also a common ground with the motor's GND (manual) |
-| Module CANH | Cable purple, column B (CAN H) | twisted with CANL |
-| Module CANL | Cable purple, column A (CAN L) | twisted with CANH |
-| Module GND / ESP32 GND | Cable black, row 2 (GND) | common ground |
-| PSU +24 V | Both row-1 reds (VIN) | not the row-10 red, which is the 5V output |
-| PSU GND | Row-2 black (GND) | |
+| ESP32 GPIO 4 (left header, 4th pin) = TWAI TX | Module TX | |
+| ESP32 GPIO 5 (left header, 5th pin) = TWAI RX | Module RX | |
+| ESP32 3V3 (left header, 2nd pin) | Module 3.3V | |
+| ESP32 GND (left header, bottom pin) | Module GND | |
+| Module CANH | Cable purple, side B, row 6 (CAN H) | twisted with CANL |
+| Module CANL | Cable purple, side A, row 6 (CAN L) | twisted with CANH |
+| ESP32 GND (right header, bottom pin) | Cable black, side B, row 10 (GND) | common ground; any black works |
+| PSU +24 V | Cable red, row 1 (VIN), either side | not the row-10 red, which is the 5V output |
+| PSU − | Cable black, row 2 (GND) | |
+
+Diagram with every pin in its real position: `docs/images/wiring.svg`. The module is drawn turned 180° so that its header faces the ESP32 and its screw terminal faces the motor.
 
 ## Bus settings
 - Bitrate: 500K is the factory default (manual). Options are 125K/250K/500K/1M.
