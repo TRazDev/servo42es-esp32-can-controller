@@ -4,6 +4,9 @@
 
 Firmware and a browser UI for controlling an MKS SERVO42ES closed-loop stepper over CAN from an ESP32-S3. It's being built as the joint controller for a 6-DOF robotic arm.
 
+- Demo video: https://youtu.be/Dbk16jcY2PQ
+- How I built it: https://artsiom-seliuzhytski-dev.co.uk/controlling-an-mks-servo42es-over-can-from-an-esp32-with-a-web-ui/
+
 ## Why
 
 Makerbase ships the SERVO42ES with a PDF manual and no example code for the CAN interface. This project covers the missing part:
